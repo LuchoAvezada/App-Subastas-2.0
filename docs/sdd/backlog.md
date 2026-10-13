@@ -59,17 +59,18 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 
 ---
 
-### F04: Catálogo de Activos, Visibilidad de Ofertas y Pujas
+### F04: Catálogo de Activos, Visibilidad de Ofertas y Pujas (✅ Completada)
 - **Objetivo:** Permitir a los colaboradores consultar los activos clasificados por categoría, ver el tiempo restante de la subasta, el precio base, la cantidad actual de ofertas enviadas y el monto líder actual en tiempo real (anónimos sin nombres de postores), y enviar una oferta válida.
 - **Q-xx asociadas:** Q-01 (`✅ Resuelta`).
 - **Riesgo:** Alto. | **Valor:** Crítico. | **Esfuerzo:** Medio.
 - **Criterios de Aceptación Iniciales:**
   - Cada tarjeta de activo muestra en tiempo real: precio base, monto líder actual (`MAX(monto)`) y cantidad total de ofertas enviadas (`COUNT(id_oferta)`).
-  - La identidad de los colaboradores postores se mantiene estrictamente anónima y protegida.
+  - La identidad de los colaboradores postores se mantiene estrictamente anónima y protegida (Constitución P9).
   - Solo el rol Usuario puede ofertar (`puedeOfertar == true`). Los administradores quedan bloqueados.
   - Validación estricta de que el monto ofertado sea mayor o igual al precio base en USD.
   - Bloqueo automático de nuevas ofertas una vez alcanzada la fecha de fin de subasta.
-  -El administrador debe contar con un boton para cerrar/abrir la recepcion de ofertas, ademas del temporizador para la finalizacion de la subasta
+  - El administrador cuenta con un botón en Configuración para cerrar/abrir manualmente la recepción de ofertas inmediatamente, además del temporizador programado.
+  - Opción ergonómica de compactar (`w-20`) y expandir (`w-72`) la barra lateral en escritorio con persistencia en `localStorage`.
 
 ---
 

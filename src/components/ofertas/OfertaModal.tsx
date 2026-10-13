@@ -6,16 +6,18 @@ import { formatUSD } from '../../lib/utils';
 import { useOfertas } from '../../hooks/useOfertas';
 import { useToast } from '../ui/Toast';
 import type { Activo } from '../../types/domain';
-import { AlertCircle, CheckCircle2, DollarSign, Tag, Info } from 'lucide-react';
+import type { EstadisticaActivo } from '../../hooks/useResumenOfertas';
+import { AlertCircle, CheckCircle2, DollarSign, Tag, Info, TrendingUp, Users } from 'lucide-react';
 
 interface OfertaModalProps {
   activo: Activo;
+  resumen?: EstadisticaActivo;
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
-export function OfertaModal({ activo, isOpen, onClose, onSuccess }: OfertaModalProps) {
+export function OfertaModal({ activo, resumen, isOpen, onClose, onSuccess }: OfertaModalProps) {
   const [monto, setMonto] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +93,28 @@ export function OfertaModal({ activo, isOpen, onClose, onSuccess }: OfertaModalP
             <div className="text-lg font-black text-agrotec-800">
               {formatUSD(activo.precio_base)}
             </div>
+          </div>
+        </div>
+
+        {/* Live auction stats banner (P9: Anonimato) */}
+        <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-[#F5F5F5] border border-[#E4E4E4] text-xs">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-[#1C5A34] shrink-0" />
+            <div>
+              <span className="text-[10px] uppercase font-bold text-gray-500 block">Mayor Oferta Actual</span>
+              <span className="font-extrabold text-gray-900">
+                {resumen && resumen.totalOfertas > 0 ? formatUSD(resumen.montoLider) : 'Sin ofertas aún'}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 justify-end text-right">
+            <div>
+              <span className="text-[10px] uppercase font-bold text-gray-500 block">Ofertas Registradas</span>
+              <span className="font-extrabold text-gray-900">
+                {resumen?.totalOfertas || 0} {resumen?.totalOfertas === 1 ? 'oferta' : 'ofertas'}
+              </span>
+            </div>
+            <Users className="w-4 h-4 text-gray-400 shrink-0" />
           </div>
         </div>
 

@@ -3,6 +3,7 @@ import { ActivoCard } from './ActivoCard';
 import { EmptyState } from '../ui/EmptyState';
 import { Input } from '../ui/Input';
 import { Search, Filter, Layers } from 'lucide-react';
+import { useResumenOfertas } from '../../hooks/useResumenOfertas';
 import type { Activo } from '../../types/domain';
 
 interface CatalogoGridProps {
@@ -15,6 +16,7 @@ interface CatalogoGridProps {
 export function CatalogoGrid({ activos, loading, onRefresh, categoryTitle }: CatalogoGridProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEstado, setFilterEstado] = useState<'Todos' | 'Disponible' | 'Adjudicado'>('Todos');
+  const { resumen, refetchResumen } = useResumenOfertas();
 
   const filtered = useMemo(() => {
     return activos.filter((a) => {
@@ -91,7 +93,15 @@ export function CatalogoGrid({ activos, loading, onRefresh, categoryTitle }: Cat
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {filtered.map((activo) => (
-            <ActivoCard key={activo.id_activo} activo={activo} onOfertaSuccess={onRefresh} />
+            <ActivoCard
+              key={activo.id_activo}
+              activo={activo}
+              resumen={resumen[activo.id_activo]}
+              onOfertaSuccess={() => {
+                refetchResumen();
+                onRefresh?.();
+              }}
+            />
           ))}
         </div>
       )}

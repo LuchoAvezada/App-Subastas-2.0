@@ -6,15 +6,17 @@ import { EstadoBadge } from '../ui/Badge';
 import { useCountdown } from '../../hooks/useCountdown';
 import { puedeOfertar } from '../../types/domain';
 import type { Activo } from '../../types/domain';
+import type { EstadisticaActivo } from '../../hooks/useResumenOfertas';
 import { useAuth } from '../../hooks/useAuth';
-import { Gavel, ImageOff, ShieldAlert } from 'lucide-react';
+import { Gavel, ImageOff, ShieldAlert, TrendingUp } from 'lucide-react';
 
 interface ActivoCardProps {
   activo: Activo;
+  resumen?: EstadisticaActivo;
   onOfertaSuccess?: () => void;
 }
 
-export function ActivoCard({ activo, onOfertaSuccess }: ActivoCardProps) {
+export function ActivoCard({ activo, resumen, onOfertaSuccess }: ActivoCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
   const countdown = useCountdown();
@@ -26,9 +28,12 @@ export function ActivoCard({ activo, onOfertaSuccess }: ActivoCardProps) {
   const isAvailable =
     activo.estado === 'Disponible' && !isAuctionClosed && habilitadoParaOfertar;
 
+  const totalOfertas = resumen?.totalOfertas || 0;
+  const montoLider = resumen && resumen.totalOfertas > 0 ? resumen.montoLider : null;
+
   return (
     <>
-      <div className="bg-white rounded-2xl border border-gray-200/90 shadow-sm hover:shadow-md hover:border-agrotec-300 transition-all duration-200 flex flex-col overflow-hidden group">
+      <div className="bg-white rounded-2xl border border-gray-200/90 shadow-sm hover:shadow-md hover:border-[#1C5A34]/40 transition-all duration-200 flex flex-col overflow-hidden group">
         {/* Card header badge */}
         <div className="px-4 pt-3.5 pb-2 flex items-center justify-between border-b border-gray-100">
           <span className="text-[11px] font-mono font-bold text-gray-500 tracking-wider">
@@ -59,7 +64,7 @@ export function ActivoCard({ activo, onOfertaSuccess }: ActivoCardProps) {
         <div className="p-4 flex-1 flex flex-col justify-between">
           <div>
             <h3 className="text-base font-extrabold text-gray-900 leading-snug">
-              <span className="text-agrotec-800">{activo.marca}</span> {activo.modelo}
+              <span className="text-[#1C5A34]">{activo.marca}</span> {activo.modelo}
             </h3>
 
             {activo.serialnumber && (
@@ -73,17 +78,33 @@ export function ActivoCard({ activo, onOfertaSuccess }: ActivoCardProps) {
             )}
           </div>
 
-          {/* Pricing & CTA */}
+          {/* Pricing, Current High Bid & CTA */}
           <div className="mt-4 pt-3 border-t border-gray-100">
-            <div className="flex items-end justify-between mb-3">
+            {/* Estadísticas de Ofertas (P9: Anónimo, Precio Base, Monto Líder, Cantidad de Ofertas) */}
+            <div className="grid grid-cols-2 gap-2 mb-2 bg-[#F5F5F5] p-2.5 rounded-xl border border-[#E4E4E4]">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">
                   Precio Base
                 </span>
-                <span className="text-xl font-black text-agrotec-800 tracking-tight">
+                <span className="text-sm font-black text-gray-900 tracking-tight block">
                   {formatUSD(activo.precio_base)}
                 </span>
               </div>
+              <div className="text-right">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block flex items-center justify-end gap-1">
+                  <TrendingUp className="w-3 h-3 text-[#1C5A34]" /> Mayor Oferta
+                </span>
+                <span className="text-sm font-black text-[#1C5A34] tracking-tight block">
+                  {montoLider ? formatUSD(montoLider) : 'Sin ofertas'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-gray-500 mb-3 px-0.5">
+              <span className="inline-flex items-center gap-1.5 font-medium">
+                <span className={`w-2 h-2 rounded-full ${totalOfertas > 0 ? 'bg-[#1C5A34]' : 'bg-gray-300'}`}></span>
+                <span>{totalOfertas} {totalOfertas === 1 ? 'oferta enviada' : 'ofertas enviadas'}</span>
+              </span>
             </div>
 
             <Button
@@ -109,6 +130,7 @@ export function ActivoCard({ activo, onOfertaSuccess }: ActivoCardProps) {
       {modalOpen && (
         <OfertaModal
           activo={activo}
+          resumen={resumen}
           isOpen={modalOpen}
           onClose={() => setModalOpen(false)}
           onSuccess={onOfertaSuccess}
