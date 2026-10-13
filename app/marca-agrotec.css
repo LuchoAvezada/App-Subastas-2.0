@@ -1,0 +1,220 @@
+/*
+ * Capa de marca de Agrotec. Se carga después de globals.css y portal.css (app/layout.tsx).
+ * Guía: colores del logo (rojo #8A2733, verde oscuro #1C5A34) solo para acentos, botones e iconos; fondos blancos o
+ * neutros; tipografía Gabarito; espacios en múltiplos de 4. Los tamaños de la guía (titulares de 62 px) se usan en las
+ * cabeceras; en menús, formularios y listas el texto es de 16 px (decisión de Agrotec, 2026-10-12).
+ */
+
+/* Gabarito (licencia SIL OFL 1.1, public/fonts/OFL-gabarito.txt). Pesos de 400 a 900: no tiene Light. */
+@font-face {
+  font-family: "Gabarito";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/gabarito-latin.woff2") format("woff2");
+}
+
+:root {
+  /* Colores principales del logo */
+  --marca-rojo: #8a2733;
+  --marca-verde: #1c5a34;
+  /* Colores complementarios */
+  --marca-gris-oscuro: #6d6d6d;
+  --marca-gris-claro: #bebebe;
+  --marca-rosa: #f9d7e0;
+  --marca-marron: #b26a46;
+  --marca-dorado: #bb913d;
+  --marca-verde-fosforescente: rgb(0, 236, 111); /* con extrema moderación */
+  /* Neutros de trabajo */
+  --marca-texto: #262626;
+  --marca-linea: #e4e4e4;
+  --marca-fondo: #f5f5f5;
+  --marca-verde-suave: #e8f0eb;
+  --font-marca: "Gabarito", "Segoe UI", Arial, sans-serif;
+
+  /* Variables heredadas, llevadas a la marca */
+  --pa-deep: var(--marca-verde);
+  --pa-deeper: var(--marca-verde);
+  --pa-teal: var(--marca-verde);
+  --pa-mint: var(--marca-verde-suave);
+  --pa-orange: var(--marca-dorado);
+  --pa-coral: var(--marca-rojo);
+  --pa-ink: var(--marca-texto);
+  --pa-muted: var(--marca-gris-oscuro);
+  --pa-line: var(--marca-linea);
+  --pa-surface: var(--marca-fondo);
+  --teal: var(--marca-verde);
+  --teal-deep: var(--marca-verde);
+  --teal-ink: var(--marca-texto);
+  --teal-soft: var(--marca-verde-suave);
+  --gray-300: var(--marca-linea);
+  --orange: var(--marca-dorado);
+}
+
+body,
+.pa-shell,
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-marca);
+}
+
+/* ---------- Portada: menú lateral claro ---------- */
+.pa-sidebar {
+  background: #ffffff;
+  border-right: 1px solid var(--marca-linea);
+  color: var(--marca-texto);
+}
+.pa-brand { color: var(--marca-texto); }
+.pa-brand img { filter: none; }
+.pa-brand span { border-left-color: var(--marca-linea); }
+.pa-brand small { color: var(--marca-gris-oscuro); }
+.pa-sidebar nav p { color: var(--marca-gris-oscuro); }
+.pa-sidebar nav button,
+.pa-sidebar nav a { color: var(--marca-texto); }
+.pa-sidebar nav button:hover,
+.pa-sidebar nav a:hover,
+.pa-sidebar nav button.is-active {
+  background: var(--marca-verde-suave);
+  color: var(--marca-verde);
+}
+.pa-sidebar nav button.is-active { box-shadow: inset 4px 0 var(--marca-verde); }
+.pa-sidebar nav i { background: var(--marca-fondo); color: var(--marca-gris-oscuro); }
+.pa-sidebar nav .is-active i,
+.pa-sidebar nav a:hover i,
+.pa-sidebar nav button:hover i {
+  background: var(--marca-verde);
+  color: #ffffff;
+}
+.pa-sidebar nav em { background: var(--marca-rojo); color: #ffffff; }
+.pa-sidebar-foot {
+  background: var(--marca-fondo);
+  border-color: var(--marca-linea);
+}
+.pa-sidebar-foot span { color: var(--marca-gris-oscuro); }
+
+/* ---------- Portada: bienvenida, cabeceras y tarjetas ---------- */
+.pa-welcome.pa-welcome-image,
+.pa-shell.is-sidebar-collapsed .pa-welcome.pa-welcome-image {
+  background: #ffffff;
+  border: 1px solid var(--marca-linea);
+  box-shadow: none;
+}
+.pa-welcome-banner {
+  object-fit: contain;
+  padding: 48px;
+}
+
+.pa-content-hero {
+  background: #ffffff;
+  border: 1px solid var(--marca-linea);
+  border-left: 4px solid var(--marca-verde);
+  box-shadow: none;
+  color: var(--marca-texto);
+}
+.pa-content-hero::after { display: none; }
+.pa-content-hero .pa-eyebrow { color: var(--marca-rojo); }
+.pa-content-hero h1,
+.pa-content-hero.admin h1 { color: var(--marca-verde); font-size: 48px; font-weight: 700; }
+.pa-content-hero p,
+.pa-content-hero.admin p { color: var(--marca-gris-oscuro); font-size: 20px; }
+.pa-content-hero .pa-secondary-button,
+.pa-content-hero .pa-secondary-button:hover {
+  background: #ffffff;
+  border-color: var(--marca-gris-claro);
+  color: var(--marca-verde);
+}
+
+.pa-eyebrow { color: var(--marca-rojo); }
+
+.pa-primary-button {
+  background: var(--marca-verde);
+  border-color: var(--marca-verde);
+  color: #ffffff;
+}
+.pa-secondary-button { border-color: var(--marca-gris-claro); color: var(--marca-verde); }
+
+.pa-module-card.featured {
+  background: #ffffff;
+  border: 1px solid var(--marca-verde);
+  color: var(--marca-texto);
+}
+.pa-module-card.featured > i { background: var(--marca-verde); color: #ffffff; }
+
+.pa-metric.warning > span { background: var(--marca-rosa); color: var(--marca-rojo); }
+
+.pa-help-launcher {
+  background: var(--marca-verde);
+  border-color: #ffffff;
+}
+.pa-help-panel > header {
+  background: #ffffff;
+  border-bottom: 1px solid var(--marca-linea);
+  color: var(--marca-texto);
+}
+
+/* ---------- Centrales de instructivos ---------- */
+.hero {
+  background: #ffffff;
+  border-bottom: 1px solid var(--marca-linea);
+  color: var(--marca-texto);
+}
+.hero::before,
+.hero-rings { display: none; }
+.hero h1 { color: var(--marca-verde); font-size: 62px; font-weight: 700; }
+.hero h1 em { color: var(--marca-rojo); }
+.hero-intro { color: var(--marca-gris-oscuro); font-size: 24px; }
+.hero-search { border: 1px solid var(--marca-gris-claro); }
+.hero-stats strong { color: var(--marca-verde); }
+.hero-stats span { color: var(--marca-gris-oscuro); }
+.eyebrow,
+.section-kicker,
+.sidebar-heading p { color: var(--marca-rojo); }
+
+.live-content-card {
+  background: var(--marca-fondo);
+  border: 1px solid var(--marca-linea);
+  color: var(--marca-texto);
+}
+.live-content-card::after { display: none; }
+.live-content-card p { color: var(--marca-gris-oscuro); }
+.sail-mark i:first-child { background: var(--marca-verde); }
+.sail-mark i:last-child { border-color: var(--marca-rojo); }
+
+/* ---------- Jerarquía tipográfica (múltiplos de 4) ---------- */
+.pa-section-heading h2,
+.topics-header h2,
+.sidebar-heading h2 { font-size: 28px; font-weight: 400; }
+.pa-eyebrow,
+.pa-sidebar nav p,
+.eyebrow,
+.section-kicker,
+.sidebar-heading p { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; }
+
+/* ---------- Correcciones de contraste sobre fondos claros ---------- */
+.pa-module-card.featured strong { color: var(--marca-verde); }
+.pa-module-card.featured p { color: var(--marca-gris-oscuro); }
+.pa-module-card.featured small,
+.pa-module-card.featured > b { color: var(--marca-rojo); }
+.pa-help-panel > header { background: #ffffff; color: var(--marca-texto); }
+.pa-help-panel > header small { color: var(--marca-rojo); }
+.pa-help-panel > header h2 { color: var(--marca-verde); }
+.pa-help-panel > header p { color: var(--marca-gris-oscuro); }
+.pa-help-panel > header > button { color: var(--marca-gris-oscuro); }
+.pa-help-search { background: var(--marca-fondo); border: 1px solid var(--marca-linea); }
+.pa-help-search > span,
+.pa-help-search input { color: var(--marca-texto); }
+.pa-help-search input::placeholder,
+.pa-help-search button { color: var(--marca-gris-oscuro); }
+
+/* Sin mascota (F12): la cabecera de las centrales ocupa una sola columna. */
+.hero { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+
+/* En pantallas angostas los titulares bajan un escalón para no partir cada palabra en una línea. */
+@media (max-width: 760px) {
+  .hero h1 { font-size: 40px; }
+  .hero-intro { font-size: 20px; }
+  .pa-content-hero h1,
+  .pa-content-hero.admin h1 { font-size: 32px; }
+}
