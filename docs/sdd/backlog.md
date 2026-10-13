@@ -10,8 +10,8 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 | ID | Feature | Depende de | Q-xx Bloqueantes | Riesgo | Valor | Esfuerzo | Estado |
 |---|---|---|---|---|---|---|---|
 | **F01** | Base del Proyecto y Tokens de Identidad Visual Agrotec | — | Ninguna | Bajo | Alto | Bajo | `✅ Completada` |
-| **F02** | Autenticación por Cédula y Seguridad de Acceso | F01 | Ninguna | Medio | Crítico | Medio | `Listo para spec` |
-| **F03** | Gestión de Activos y Carga de Fotos (Panel Admin) | F01, F02 | Ninguna | Medio | Alto | Medio | `En espera` |
+| **F02** | Autenticación por Cédula y Seguridad de Acceso | F01 | Ninguna | Medio | Crítico | Medio | `✅ Completada` |
+| **F03** | Gestión de Activos y Carga de Fotos (Panel Admin) | F01, F02 | Ninguna | Medio | Alto | Medio | `Listo para spec` |
 | **F04** | Catálogo de Activos, Visibilidad de Ofertas y Pujas | F01, F02, F03 | Ninguna | Alto | Crítico | Medio | `En espera` |
 | **F05** | Mis Ofertas y Cancelación de Oferta con Veto | F04 | Ninguna | Medio | Alto | Bajo | `En espera` |
 | **F06** | Procesamiento de Ganadores, Tope por Categoría y Desempate | F04 | Ninguna | Alto | Crítico | Alto | `En espera` |
@@ -35,7 +35,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 
 ---
 
-### F02: Autenticación por Cédula y Seguridad de Acceso
+### F02: Autenticación por Cédula y Seguridad de Acceso (✅ Completada)
 - **Objetivo:** Implementar el acceso seguro para colaboradores y administradores mediante número de Cédula paraguaya (`ci_documento`) y contraseña con hash `pgcrypto`, registro inicial de contraseña para colaboradores pre-cargados, bloqueo ante intentos fallidos y auditoría.
 - **Q-xx asociadas:** Ninguna (Principio P3 ratificado).
 - **Riesgo:** Medio. | **Valor:** Crítico. | **Esfuerzo:** Medio.

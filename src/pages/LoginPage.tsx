@@ -101,7 +101,7 @@ export function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full shadow-md"
+              className="w-full shadow-none"
               size="lg"
               isLoading={loading}
               rightIcon={<ArrowRight className="w-4 h-4" />}
@@ -110,12 +110,12 @@ export function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 border-t border-gray-100 pt-6 text-center">
-            <p className="text-xs text-gray-600">
+          <div className="mt-6 border-t border-[#E4E4E4] pt-6 text-center">
+            <p className="text-xs text-[#6D6D6D]">
               ¿Primera vez participando?{' '}
               <Link
                 to="/registro"
-                className="font-semibold text-agrotec-800 hover:text-agrotec-900 underline underline-offset-2"
+                className="font-semibold text-[#1C5A34] hover:text-[#154728] underline underline-offset-2 transition-colors"
               >
                 Activar / Registrar mi cuenta
               </Link>
@@ -175,8 +175,8 @@ export function LoginPage() {
         </div>
 
         {/* Security / Help Note */}
-        <div className="mt-6 text-center text-xs text-agrotec-200/80 max-w-sm mx-auto flex items-center justify-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-agrotec-400 shrink-0" />
+        <div className="mt-6 text-center text-xs text-[#6D6D6D] max-w-sm mx-auto flex items-center justify-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-[#1C5A34] shrink-0" />
           <span>Acceso exclusivo para colaboradores habilitados.</span>
         </div>
       </div>

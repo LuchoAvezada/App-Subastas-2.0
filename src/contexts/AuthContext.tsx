@@ -1,37 +1,26 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { useState, useCallback, type ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Usuario } from '../types/domain';
+import { AuthContext, STORAGE_KEY } from './auth-context-definition';
 
-const STORAGE_KEY = 'subasta_user';
-
-interface AuthContextType {
-  usuario: Usuario | null;
-  loading: boolean;
-  login: (ci: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
-  registrar: (ci: string, password: string) => Promise<{ success: boolean; error?: string }>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
+function getInitialUser(): Usuario | null {
+  try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as Usuario;
-        if (parsed.id_usuario && parsed.ci_documento) {
-          setUsuario(parsed);
-        }
-      } catch {
-        localStorage.removeItem(STORAGE_KEY);
+      const parsed = JSON.parse(stored) as Usuario;
+      if (parsed.id_usuario && parsed.ci_documento) {
+        return parsed;
       }
     }
-    setLoading(false);
-  }, []);
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+  return null;
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [usuario, setUsuario] = useState<Usuario | null>(getInitialUser);
+  const [loading] = useState(false);
 
   const login = useCallback(async (ci: string, password: string) => {
     try {
@@ -52,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
 
       if (!result.success) {
-        return { success: false, error: result.error || 'Error desconocido.' };
+        return { success: false, error: result.error || 'Credenciales inválidas.' };
       }
 
       if (result.data) {
@@ -92,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return result.success
         ? { success: true }
-        : { success: false, error: result.error || 'Error desconocido.' };
+        : { success: false, error: result.error || 'No se pudo completar el registro.' };
     } catch (err) {
       console.error('Register error:', err);
       return { success: false, error: 'Error de conexión.' };
@@ -104,12 +93,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth(): AuthContextType {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error('useAuth debe usarse dentro de un AuthProvider');
-  }
-  return ctx;
 }
