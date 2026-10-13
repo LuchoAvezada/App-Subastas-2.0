@@ -69,6 +69,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
   - Solo el rol Usuario puede ofertar (`puedeOfertar == true`). Los administradores quedan bloqueados.
   - Validación estricta de que el monto ofertado sea mayor o igual al precio base en USD.
   - Bloqueo automático de nuevas ofertas una vez alcanzada la fecha de fin de subasta.
+  -El administrador debe contar con un boton para cerrar/abrir la recepcion de ofertas, ademas del temporizador para la finalizacion de la subasta
 
 ---
 
