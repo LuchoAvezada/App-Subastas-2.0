@@ -12,6 +12,9 @@ export function useActivos(options?: UseActivosOptions) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const idCategoria = options?.idCategoria;
+  const estado = options?.estado;
+
   const fetchActivos = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -21,12 +24,12 @@ export function useActivos(options?: UseActivosOptions) {
         .select('*')
         .order('id_activo', { ascending: true });
 
-      if (options?.idCategoria) {
-        query = query.eq('id_categoria', options.idCategoria);
+      if (idCategoria) {
+        query = query.eq('id_categoria', idCategoria);
       }
 
-      if (options?.estado && options.estado !== 'Todos') {
-        query = query.eq('estado', options.estado);
+      if (estado && estado !== 'Todos') {
+        query = query.eq('estado', estado);
       }
 
       const { data, error: fetchError } = await query;
@@ -41,7 +44,7 @@ export function useActivos(options?: UseActivosOptions) {
     } finally {
       setLoading(false);
     }
-  }, [options?.idCategoria, options?.estado]);
+  }, [idCategoria, estado]);
 
   useEffect(() => {
     fetchActivos();

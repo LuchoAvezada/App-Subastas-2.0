@@ -11,8 +11,8 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 |---|---|---|---|---|---|---|---|
 | **F01** | Base del Proyecto y Tokens de Identidad Visual Agrotec | — | Ninguna | Bajo | Alto | Bajo | `✅ Completada` |
 | **F02** | Autenticación por Cédula y Seguridad de Acceso | F01 | Ninguna | Medio | Crítico | Medio | `✅ Completada` |
-| **F03** | Gestión de Activos y Carga de Fotos (Panel Admin) | F01, F02 | Ninguna | Medio | Alto | Medio | `Listo para spec` |
-| **F04** | Catálogo de Activos, Visibilidad de Ofertas y Pujas | F01, F02, F03 | Ninguna | Alto | Crítico | Medio | `En espera` |
+| **F03** | Gestión de Activos y Carga de Fotos (Panel Admin) | F01, F02 | Ninguna | Medio | Alto | Medio | `✅ Completada` |
+| **F04** | Catálogo de Activos, Visibilidad de Ofertas y Pujas | F01, F02, F03 | Ninguna | Alto | Crítico | Medio | `Listo para spec` |
 | **F05** | Mis Ofertas y Cancelación de Oferta con Veto | F04 | Ninguna | Medio | Alto | Bajo | `En espera` |
 | **F06** | Procesamiento de Ganadores, Tope por Categoría y Desempate | F04 | Ninguna | Alto | Crítico | Alto | `En espera` |
 | **F07** | Publicación de Resultados y Reasignación por Desistimiento | F06 | Ninguna | Medio | Alto | Medio | `En espera` |
@@ -47,7 +47,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 
 ---
 
-### F03: Gestión de Activos y Carga de Fotos (Panel Admin)
+### F03: Gestión de Activos y Carga de Fotos (Panel Admin) (✅ Completada)
 - **Objetivo:** Permitir al administrador gestionar el catálogo de activos en subasta (crear, editar, clasificar por categorías, precio base en USD, número de serie, marca, modelo, observaciones) y subir imágenes directamente a Supabase Storage (bucket `activos-subasta`).
 - **Q-xx asociadas:** Q-04 (`✅ Resuelta`).
 - **Riesgo:** Medio. | **Valor:** Alto. | **Esfuerzo:** Medio.

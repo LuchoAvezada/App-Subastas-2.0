@@ -9,7 +9,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { useToast } from '../../components/ui/Toast';
 import { formatUSD } from '../../lib/utils';
 import type { Activo } from '../../types/domain';
-import { PackagePlus, Search, Edit3, Trash2, RefreshCw, Layers } from 'lucide-react';
+import { PackagePlus, Search, Edit3, Trash2, RefreshCw, Layers, Image as ImageIcon } from 'lucide-react';
 
 export function AdminActivosPage() {
   const [activos, setActivos] = useState<Activo[]>([]);
@@ -189,6 +189,7 @@ export function AdminActivosPage() {
               <thead className="bg-gray-50/80 border-b border-gray-200 text-xs uppercase font-semibold text-gray-500 tracking-wider">
                 <tr>
                   <th className="py-3.5 px-4">ID</th>
+                  <th className="py-3.5 px-3">Foto</th>
                   <th className="py-3.5 px-4">Categoría</th>
                   <th className="py-3.5 px-4">Marca y Modelo</th>
                   <th className="py-3.5 px-4">S/N & FAM</th>
@@ -203,8 +204,22 @@ export function AdminActivosPage() {
                     <td className="py-3.5 px-4 font-mono font-bold text-gray-900 text-xs">
                       #{a.id_activo}
                     </td>
+                    <td className="py-3.5 px-3">
+                      {a.foto_url ? (
+                        <img
+                          src={a.foto_url}
+                          alt={`${a.marca || ''} ${a.modelo || ''}`}
+                          className="w-10 h-10 rounded-lg object-cover border border-[#E4E4E4] bg-white shadow-none"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200/80 flex items-center justify-center text-gray-400">
+                          <ImageIcon className="w-4 h-4" />
+                        </div>
+                      )}
+                    </td>
                     <td className="py-3.5 px-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#E8F0EB] text-[#1C5A34]">
                         {getCategoriaLabel(a.id_categoria)}
                       </span>
                     </td>
