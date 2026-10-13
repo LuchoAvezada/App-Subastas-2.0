@@ -14,8 +14,8 @@
 - [x] **2.5 Backlog:** [backlog.md](file:///c:/Users/jorge.avezada/OneDrive%20-%20Agrihold%20Management%20Corp/Escritorio/App%20Subastas%202.0/docs/sdd/backlog.md) con features F01 a F08 ordenadas por riesgo y dependencia.
 
 ## Backlog de Features
-- **F01 - Base del Proyecto y Tokens de Identidad Visual Agrotec:** Listo para spec.
-- **F02 - Autenticación por Cédula y Seguridad de Acceso:** En espera (depende de F01).
+- **F01 - Base del Proyecto y Tokens de Identidad Visual Agrotec:** Completada (`001-base-marca`).
+- **F02 - Autenticación por Cédula y Seguridad de Acceso:** Siguiente (Listo para spec).
 - **F03 - Gestión de Activos y Carga de Fotos (Panel Admin):** En espera (depende de F01, F02).
 - **F04 - Catálogo de Activos, Visibilidad de Ofertas y Pujas:** En espera (depende de F01, F02, F03).
 - **F05 - Mis Ofertas y Cancelación de Oferta con Veto:** En espera (depende de F04).

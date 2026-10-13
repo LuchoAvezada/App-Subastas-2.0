@@ -9,8 +9,8 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 
 | ID | Feature | Depende de | Q-xx Bloqueantes | Riesgo | Valor | Esfuerzo | Estado |
 |---|---|---|---|---|---|---|---|
-| **F01** | Base del Proyecto y Tokens de Identidad Visual Agrotec | — | Ninguna | Bajo | Alto | Bajo | `Listo para spec` |
-| **F02** | Autenticación por Cédula y Seguridad de Acceso | F01 | Ninguna | Medio | Crítico | Medio | `En espera` |
+| **F01** | Base del Proyecto y Tokens de Identidad Visual Agrotec | — | Ninguna | Bajo | Alto | Bajo | `✅ Completada` |
+| **F02** | Autenticación por Cédula y Seguridad de Acceso | F01 | Ninguna | Medio | Crítico | Medio | `Listo para spec` |
 | **F03** | Gestión de Activos y Carga de Fotos (Panel Admin) | F01, F02 | Ninguna | Medio | Alto | Medio | `En espera` |
 | **F04** | Catálogo de Activos, Visibilidad de Ofertas y Pujas | F01, F02, F03 | Ninguna | Alto | Crítico | Medio | `En espera` |
 | **F05** | Mis Ofertas y Cancelación de Oferta con Veto | F04 | Ninguna | Medio | Alto | Bajo | `En espera` |
@@ -22,7 +22,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 
 ## Detalle de Features
 
-### F01: Base del Proyecto y Tokens de Identidad Visual Agrotec
+### F01: Base del Proyecto y Tokens de Identidad Visual Agrotec (✅ Completada)
 - **Objetivo:** Consolidar la arquitectura base con tokens de marca en `src/marca-agrotec.css`, tipografía Gabarito local con licencia SIL OFL, logo corporativo y herramientas de pruebas (`vitest`) y linting (`oxlint`) operativas.
 - **Q-xx asociadas:** Q-06 (`✅ Resuelta`).
 - **Riesgo:** Bajo. | **Valor:** Alto. | **Esfuerzo:** Bajo.

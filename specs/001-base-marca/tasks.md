@@ -41,5 +41,5 @@
 
 ## Phase 5: Verificación en Pantalla y Cierre
 
-- [ ] **T014**: Validar visualmente en navegador integrado la pantalla de `/login` y navegación general (escritorio y vista móvil).
-- [ ] **T015**: Registrar cierre en `docs/sdd/backlog.md`, `docs/ejecucion-local.md` y memoria persistente.
+- [x] **T014**: Validar visualmente en navegador integrado la pantalla de `/login` y navegación general (escritorio y vista móvil).
+- [x] **T015**: Registrar cierre en `docs/sdd/backlog.md`, `docs/ejecucion-local.md` y memoria persistente.
