@@ -9,7 +9,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { useToast } from '../../components/ui/Toast';
 import { formatUSD } from '../../lib/utils';
 import type { Activo } from '../../types/domain';
-import { PackagePlus, Search, Edit3, Trash2, RefreshCw, Layers, Image as ImageIcon } from 'lucide-react';
+import { PackagePlus, Search, Edit3, Trash2, RefreshCw, Layers, Image as ImageIcon, AlertTriangle, AlertCircle } from 'lucide-react';
 
 export function AdminActivosPage() {
   const [activos, setActivos] = useState<Activo[]>([]);
@@ -18,6 +18,9 @@ export function AdminActivosPage() {
   const [selectedCategoria, setSelectedCategoria] = useState<string>('Todos');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activoEditing, setActivoEditing] = useState<Activo | null>(null);
+  const [activoToDelete, setActivoToDelete] = useState<Activo | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const toast = useToast();
 
@@ -53,25 +56,46 @@ export function AdminActivosPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (idActivo: number) => {
-    if (!window.confirm(`¿Está seguro de eliminar el activo #${idActivo}? Esta acción no se puede deshacer.`)) {
-      return;
-    }
+  const handleConfirmDelete = async () => {
+    if (!activoToDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
 
     try {
-      const { error } = await supabase
+      // 1. Validar si ya existen ofertas para evitar errores de clave foránea y guiar al usuario
+      const { count, error: countError } = await supabase
+        .from('sub_ofertas')
+        .select('*', { count: 'exact', head: true })
+        .eq('id_activo', activoToDelete.id_activo);
+
+      if (!countError && count && count > 0) {
+        setDeleteError(
+          `No se puede eliminar el activo #${activoToDelete.id_activo} porque ya cuenta con ${count} oferta(s) registrada(s). Para darlo de baja, puede cambiar su estado a 'Cerrado' o 'Adjudicado'.`
+        );
+        setIsDeleting(false);
+        return;
+      }
+
+      // 2. Ejecutar la eliminación
+      const { error: deleteResultError } = await supabase
         .from('sub_activos')
         .delete()
-        .eq('id_activo', idActivo);
+        .eq('id_activo', activoToDelete.id_activo);
 
-      if (error) {
-        toast.error(`No se pudo eliminar el activo: ${error.message}`);
-      } else {
-        toast.success(`Activo #${idActivo} eliminado exitosamente`);
-        fetchActivos();
+      if (deleteResultError) {
+        setDeleteError(`No se pudo eliminar el activo: ${deleteResultError.message}`);
+        setIsDeleting(false);
+        return;
       }
-    } catch {
-      toast.error('Error al eliminar el activo');
+
+      toast.success(`Activo #${activoToDelete.id_activo} eliminado exitosamente`);
+      setActivoToDelete(null);
+      fetchActivos();
+    } catch (err) {
+      console.error('Error al eliminar activo:', err);
+      setDeleteError('Ocurrió un error inesperado al intentar eliminar el activo.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -251,8 +275,12 @@ export function AdminActivosPage() {
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(a.id_activo)}
-                          className="p-1.5 text-gray-400 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                          type="button"
+                          onClick={() => {
+                            setDeleteError(null);
+                            setActivoToDelete(a);
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-[#8A2733] hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                           title="Eliminar activo"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -283,6 +311,90 @@ export function AdminActivosPage() {
           }}
           onCancel={() => setIsModalOpen(false)}
         />
+      </Modal>
+
+      {/* Modal de Confirmación para Eliminar Activo */}
+      <Modal
+        isOpen={Boolean(activoToDelete)}
+        onClose={() => {
+          if (!isDeleting) {
+            setActivoToDelete(null);
+            setDeleteError(null);
+          }
+        }}
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-red-50 text-[#8A2733] flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">
+                ¿Eliminar Activo #{activoToDelete?.id_activo}?
+              </h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Esta acción eliminará el registro del equipo de forma permanente.
+              </p>
+            </div>
+          </div>
+
+          {deleteError && (
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+              <div className="leading-relaxed font-medium">{deleteError}</div>
+            </div>
+          )}
+
+          {activoToDelete && (
+            <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 flex items-center gap-3">
+              {activoToDelete.foto_url ? (
+                <img
+                  src={activoToDelete.foto_url}
+                  alt={`${activoToDelete.marca || ''} ${activoToDelete.modelo || ''}`}
+                  className="w-12 h-12 rounded-lg object-cover border border-[#E4E4E4] bg-white shrink-0"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-gray-200/80 border border-gray-300 flex items-center justify-center text-gray-400 shrink-0">
+                  <ImageIcon className="w-5 h-5" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-sm text-gray-900 truncate">
+                  {activoToDelete.marca} {activoToDelete.modelo}
+                </div>
+                <div className="text-xs text-gray-500 font-mono truncate">
+                  S/N: {activoToDelete.serialnumber || 'Sin S/N'} • Base: {formatUSD(activoToDelete.precio_base)}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-gray-100">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isDeleting}
+              onClick={() => {
+                setActivoToDelete(null);
+                setDeleteError(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
+              isLoading={isDeleting}
+              leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+              onClick={handleConfirmDelete}
+            >
+              Sí, Eliminar Activo
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
