@@ -1,33 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { formatUSD } from '../src/lib/utils';
 import { ROL, puedeOfertar, type Usuario } from '../src/types/domain';
-
-interface OfertaPublicaRaw {
-  id_activo: number;
-  monto: number;
-}
-
-interface EstadisticaActivo {
-  montoLider: number;
-  totalOfertas: number;
-}
-
-function calcularResumenOfertas(ofertas: OfertaPublicaRaw[]): Record<number, EstadisticaActivo> {
-  const map: Record<number, EstadisticaActivo> = {};
-
-  for (const o of ofertas) {
-    if (!map[o.id_activo]) {
-      map[o.id_activo] = { montoLider: o.monto, totalOfertas: 1 };
-    } else {
-      map[o.id_activo].totalOfertas += 1;
-      if (o.monto > map[o.id_activo].montoLider) {
-        map[o.id_activo].montoLider = o.monto;
-      }
-    }
-  }
-
-  return map;
-}
+import {
+  calcularResumenOfertas,
+  type OfertaPublicaRaw,
+} from '../src/hooks/useResumenOfertas';
 
 describe('Catálogo de Activos y Visibilidad de Ofertas — F04', () => {
   describe('Cálculo Anónimo de Monto Líder y Conteo de Ofertas', () => {
@@ -68,6 +45,19 @@ describe('Catálogo de Activos y Visibilidad de Ofertas — F04', () => {
       expect(item).not.toHaveProperty('nombre');
       expect(item).not.toHaveProperty('ci_documento');
       expect(item).not.toHaveProperty('id_colaborador');
+    });
+
+    it('maneja correctamente montos numéricos recibidos como strings (compatibilidad API)', () => {
+      const ofertasRaw = [
+        { id_activo: 9, monto: '400.00' },
+        { id_activo: 9, monto: '350.50' },
+      ];
+      const resumen = calcularResumenOfertas(ofertasRaw as unknown as OfertaPublicaRaw[]);
+
+      expect(resumen[9]).toBeDefined();
+      expect(resumen[9].totalOfertas).toBe(2);
+      expect(resumen[9].montoLider).toBe(400);
+      expect(formatUSD(resumen[9].montoLider)).toBe('$400.00');
     });
   });
 
