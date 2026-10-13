@@ -75,14 +75,16 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 
 ---
 
-### F05: Mis Ofertas y Cancelación de Oferta con Veto
+### F05: Mis Ofertas y Cancelación de Oferta con Veto (✅ Completada)
 - **Objetivo:** Permitir a los colaboradores consultar en "Mis Ofertas" el detalle de sus postulaciones vigentes y posibilitar la cancelación de una oferta antes del cierre, con veto permanente de re-oferta en ese activo.
 - **Q-xx asociadas:** Q-02 (`✅ Resuelta`).
 - **Riesgo:** Medio. | **Valor:** Alto. | **Esfuerzo:** Bajo.
 - **Criterios de Aceptación Iniciales:**
-  - Visualización exclusiva de las ofertas pertenecientes al colaborador autenticado.
-  - Acción de "Cancelar Oferta" con confirmación y advertencia clara sobre la irrevocabilidad de la cancelación.
+  - Visualización exclusiva de las ofertas pertenecientes al colaborador autenticado en `/mis-ofertas`.
+  - Acción de "Cancelar Oferta" con confirmación modal y advertencia clara sobre la irrevocabilidad y veto permanente (Constitución P9).
   - Al cancelar, la oferta se retira del cómputo activo y el sistema veta permanentemente al colaborador para volver a ofertar por ese activo.
+  - Bloqueo de cancelación cuando la subasta ha finalizado o cerrado.
+  - Historial de ofertas canceladas y vetos activos accesible en la interfaz.
 
 ---
 

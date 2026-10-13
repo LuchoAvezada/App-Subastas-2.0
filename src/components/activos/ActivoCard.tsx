@@ -8,7 +8,8 @@ import { puedeOfertar } from '../../types/domain';
 import type { Activo } from '../../types/domain';
 import type { EstadisticaActivo } from '../../hooks/useResumenOfertas';
 import { useAuth } from '../../hooks/useAuth';
-import { Gavel, ImageOff, ShieldAlert, TrendingUp } from 'lucide-react';
+import { hasVetoColaborador } from '../../lib/vetos';
+import { Gavel, ImageOff, ShieldAlert, TrendingUp, Ban } from 'lucide-react';
 
 interface ActivoCardProps {
   activo: Activo;
@@ -22,11 +23,14 @@ export function ActivoCard({ activo, resumen, onOfertaSuccess }: ActivoCardProps
   const countdown = useCountdown();
   const { usuario } = useAuth();
 
+  // Veto permanente por desistimiento voluntario (Principio P9)
+  const isVetado = usuario ? hasVetoColaborador(usuario.id_colaborador, activo.id_activo) : false;
+
   // Admins y visitantes no participan de la subasta (regla reforzada en registrar_oferta)
   const habilitadoParaOfertar = puedeOfertar(usuario);
   const isAuctionClosed = countdown.isExpired;
   const isAvailable =
-    activo.estado === 'Disponible' && !isAuctionClosed && habilitadoParaOfertar;
+    activo.estado === 'Disponible' && !isAuctionClosed && habilitadoParaOfertar && !isVetado;
 
   const totalOfertas = resumen?.totalOfertas || 0;
   const montoLider = resumen && resumen.totalOfertas > 0 ? resumen.montoLider : null;
@@ -107,15 +111,32 @@ export function ActivoCard({ activo, resumen, onOfertaSuccess }: ActivoCardProps
               </span>
             </div>
 
+            {isVetado && (
+              <div className="mb-2 p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-medium flex items-center gap-1.5">
+                <Ban className="w-3.5 h-3.5 text-[#8A2733] shrink-0" />
+                <span>Veto activo por cancelación previa (P9)</span>
+              </div>
+            )}
+
             <Button
               variant={isAvailable ? 'primary' : 'outline'}
               className="w-full"
               size="md"
               disabled={!isAvailable}
               onClick={() => setModalOpen(true)}
-              leftIcon={isAvailable ? <Gavel className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4 text-gray-400" />}
+              leftIcon={
+                isVetado ? (
+                  <Ban className="w-4 h-4 text-[#8A2733]" />
+                ) : isAvailable ? (
+                  <Gavel className="w-4 h-4" />
+                ) : (
+                  <ShieldAlert className="w-4 h-4 text-gray-400" />
+                )
+              }
             >
-              {!habilitadoParaOfertar
+              {isVetado
+                ? 'Oferta cancelada (Veto)'
+                : !habilitadoParaOfertar
                 ? 'Solo para participantes'
                 : isAuctionClosed
                 ? 'Subasta Finalizada'

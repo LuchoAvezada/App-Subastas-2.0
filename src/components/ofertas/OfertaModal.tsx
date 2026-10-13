@@ -7,7 +7,18 @@ import { useOfertas } from '../../hooks/useOfertas';
 import { useToast } from '../ui/Toast';
 import type { Activo } from '../../types/domain';
 import type { EstadisticaActivo } from '../../hooks/useResumenOfertas';
-import { AlertCircle, CheckCircle2, DollarSign, Tag, Info, TrendingUp, Users } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { hasVetoColaborador } from '../../lib/vetos';
+import {
+  AlertCircle,
+  CheckCircle2,
+  DollarSign,
+  Tag,
+  Info,
+  TrendingUp,
+  Users,
+  Ban,
+} from 'lucide-react';
 
 interface OfertaModalProps {
   activo: Activo;
@@ -22,6 +33,8 @@ export function OfertaModal({ activo, resumen, isOpen, onClose, onSuccess }: Ofe
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const { usuario } = useAuth();
+  const isVetado = usuario ? hasVetoColaborador(usuario.id_colaborador, activo.id_activo) : false;
   const { enviarOferta, misOfertas } = useOfertas();
   const ofertaPrevia = misOfertas.find((o) => o.id_activo === activo.id_activo);
   const toast = useToast();
@@ -140,6 +153,17 @@ export function OfertaModal({ activo, resumen, isOpen, onClose, onSuccess }: Ofe
             helperText={`Debe ser igual o mayor a ${formatUSD(activo.precio_base)}`}
           />
 
+          {isVetado && (
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2.5 text-xs text-rose-900 animate-fade-in">
+              <Ban className="w-4 h-4 text-[#8A2733] shrink-0 mt-0.5" />
+              <span>
+                Posees un <strong>veto permanente de reincidencia</strong> en este activo debido a
+                una cancelación voluntaria previa (Principio Constitucional P9). No puedes volver a
+                enviar ofertas por este bien.
+              </span>
+            </div>
+          )}
+
           {ofertaPrevia && (
             <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-start gap-2 text-xs text-amber-900">
               <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
@@ -156,7 +180,7 @@ export function OfertaModal({ activo, resumen, isOpen, onClose, onSuccess }: Ofe
             <Button
               type="submit"
               variant="primary"
-              disabled={!!ofertaPrevia}
+              disabled={!!ofertaPrevia || isVetado}
               isLoading={submitting}
               leftIcon={<CheckCircle2 className="w-4 h-4" />}
             >
