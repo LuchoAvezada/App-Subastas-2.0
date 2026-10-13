@@ -71,6 +71,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
   - Bloqueo automático de nuevas ofertas una vez alcanzada la fecha de fin de subasta.
   - El administrador cuenta con un botón en Configuración para cerrar/abrir manualmente la recepción de ofertas inmediatamente, además del temporizador programado.
   - Opción ergonómica de compactar (`w-20`) y expandir (`w-72`) la barra lateral en escritorio con persistencia en `localStorage`.
+  
 
 ---
 
