@@ -157,9 +157,8 @@ export function OfertaModal({ activo, resumen, isOpen, onClose, onSuccess }: Ofe
             <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2.5 text-xs text-rose-900 animate-fade-in">
               <Ban className="w-4 h-4 text-[#8A2733] shrink-0 mt-0.5" />
               <span>
-                Posees un <strong>veto permanente de reincidencia</strong> en este activo debido a
-                una cancelación voluntaria previa (Principio Constitucional P9). No puedes volver a
-                enviar ofertas por este bien.
+                ⚠️ <strong>IMPORTANTE:</strong> Al anular su oferta por este activo, no podrá volver a
+                ofertar por el mismo. Podrá continuar ofertando en cualquier otro item de la subasta.
               </span>
             </div>
           )}

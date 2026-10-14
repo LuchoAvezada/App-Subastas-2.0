@@ -114,7 +114,7 @@ export function ActivoCard({ activo, resumen, onOfertaSuccess }: ActivoCardProps
             {isVetado && (
               <div className="mb-2 p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-medium flex items-center gap-1.5">
                 <Ban className="w-3.5 h-3.5 text-[#8A2733] shrink-0" />
-                <span>Veto activo por cancelación previa (P9)</span>
+                <span>Oferta cancelada: no puede volver a ofertar por este item</span>
               </div>
             )}
 
@@ -135,7 +135,7 @@ export function ActivoCard({ activo, resumen, onOfertaSuccess }: ActivoCardProps
               }
             >
               {isVetado
-                ? 'Oferta cancelada (Veto)'
+                ? '- Cancelada -'
                 : !habilitadoParaOfertar
                 ? 'Solo para participantes'
                 : isAuctionClosed

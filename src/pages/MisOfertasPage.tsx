@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useOfertas } from '../hooks/useOfertas';
 import { useCountdown } from '../hooks/useCountdown';
 import { useAuth } from '../hooks/useAuth';
@@ -16,8 +16,8 @@ import {
   ArrowRight,
   Ban,
   AlertTriangle,
-  ShieldAlert,
   Clock,
+  CheckCircle2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Papa from 'papaparse';
@@ -51,17 +51,51 @@ export function MisOfertasPage() {
     return () => window.removeEventListener('agrotec_veto_registrado', onVeto);
   }, [usuario?.id_colaborador]);
 
-  const handleExportCSV = () => {
-    if (misOfertas.length === 0) return;
+  // Lista combinada de ofertas para visualización completa: Activas y Canceladas
+  const todasLasOfertas = useMemo(() => {
+    const activas = misOfertas.map((o) => ({
+      tipo: 'activa' as const,
+      id_oferta: o.id_oferta,
+      id_activo: o.id_activo,
+      marca: o.marca,
+      modelo: o.modelo,
+      categoria: o.categoria,
+      serialnumber: o.serialnumber,
+      fam: o.fam,
+      precio_base: o.precio_base,
+      monto: Number(o.monto),
+      fecha_hora_display: o.fecha_hora_display,
+      original: o,
+    }));
 
-    const dataToExport = misOfertas.map((o) => ({
-      'ID Oferta': o.id_oferta,
+    const canceladas = vetos.map((v) => ({
+      tipo: 'cancelada' as const,
+      id_oferta: -v.id_activo,
+      id_activo: v.id_activo,
+      marca: v.marca || 'Activo',
+      modelo: v.modelo || '',
+      categoria: v.categoria || 'Equipos',
+      serialnumber: '—',
+      fam: null,
+      precio_base: null,
+      monto: v.monto_cancelado,
+      fecha_hora_display: formatFechaAsuncion(v.fecha_cancelacion),
+      original: null,
+    }));
+
+    return [...activas, ...canceladas];
+  }, [misOfertas, vetos]);
+
+  const handleExportCSV = () => {
+    if (todasLasOfertas.length === 0) return;
+
+    const dataToExport = todasLasOfertas.map((o) => ({
+      'ID Oferta': o.tipo === 'activa' ? o.id_oferta : 'N/A',
       'ID Activo': o.id_activo,
       'Categoría': o.categoria,
       'Marca': o.marca || '',
       'Modelo': o.modelo || '',
-      'Serial Number': o.serialnumber || '',
-      'Precio Base USD': o.precio_base,
+      'Estado': o.tipo === 'activa' ? 'Activa' : 'Cancelada',
       'Monto Ofertado USD': o.monto,
       'Fecha y Hora': o.fecha_hora_display,
     }));
@@ -91,7 +125,7 @@ export function MisOfertasPage() {
 
       if (res.success) {
         toast.success(
-          `Oferta por ${ofertaACancelar.marca} ${ofertaACancelar.modelo} cancelada. Veto registrado.`
+          `Oferta por ${ofertaACancelar.marca} ${ofertaACancelar.modelo} cancelada.`
         );
         if (usuario?.id_colaborador) {
           setVetos(getVetosColaborador(usuario.id_colaborador));
@@ -107,7 +141,7 @@ export function MisOfertasPage() {
     }
   };
 
-  const totalOfertado = misOfertas.reduce((acc, curr) => acc + Number(curr.monto), 0);
+  const totalOfertadoActivo = misOfertas.reduce((acc, curr) => acc + Number(curr.monto), 0);
   const isSubastaCerrada = countdown.isExpired;
 
   return (
@@ -123,7 +157,7 @@ export function MisOfertasPage() {
             Mis Ofertas Realizadas
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 mt-1">
-            Consulte, supervise y gestione sus posturas en la subasta interna
+            Consulte y haga seguimiento del estado de sus posturas vigentes y canceladas
           </p>
         </div>
 
@@ -140,7 +174,7 @@ export function MisOfertasPage() {
           <Button
             variant="secondary"
             size="sm"
-            disabled={misOfertas.length === 0}
+            disabled={todasLasOfertas.length === 0}
             onClick={handleExportCSV}
             leftIcon={<Download className="w-3.5 h-3.5" />}
           >
@@ -150,20 +184,32 @@ export function MisOfertasPage() {
       </div>
 
       {/* Summary KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-2xl bg-white border border-gray-200/80 shadow-sm">
-          <span className="text-xs font-semibold text-gray-500 block">Total de Ofertas Activas</span>
+          <span className="text-xs font-semibold text-gray-500 block">Ofertas Activas</span>
           <span className="text-2xl font-black text-gray-900 mt-1 block">{misOfertas.length}</span>
         </div>
 
         <div className="p-4 rounded-2xl bg-white border border-gray-200/80 shadow-sm">
-          <span className="text-xs font-semibold text-gray-500 block">Monto Acumulado Ofertado</span>
-          <span className="text-2xl font-black text-agrotec-800 mt-1 block">
-            {formatUSD(totalOfertado)}
+          <span className="text-xs font-semibold text-gray-500 block">Ofertas Canceladas</span>
+          <span className="text-2xl font-black text-[#8A2733] mt-1 block flex items-center gap-2">
+            {vetos.length}
+            {vetos.length > 0 && (
+              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-[#F9D7E0] text-[#8A2733] border border-rose-200">
+                Cancelada
+              </span>
+            )}
           </span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-gray-200/80 shadow-sm sm:col-span-2 lg:col-span-1">
+        <div className="p-4 rounded-2xl bg-white border border-gray-200/80 shadow-sm">
+          <span className="text-xs font-semibold text-gray-500 block">Monto Ofertado Activo</span>
+          <span className="text-2xl font-black text-agrotec-800 mt-1 block">
+            {formatUSD(totalOfertadoActivo)}
+          </span>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-white border border-gray-200/80 shadow-sm">
           <span className="text-xs font-semibold text-gray-500 block">Estado de la Subasta</span>
           {isSubastaCerrada ? (
             <span className="text-xs font-bold text-[#8A2733] bg-[#F9D7E0] border border-rose-200 px-2.5 py-1 rounded-full inline-flex items-center gap-1.5 mt-2">
@@ -184,10 +230,10 @@ export function MisOfertasPage() {
         <div className="bg-white rounded-2xl p-12 border border-gray-200/80 flex justify-center">
           <Spinner size="lg" label="Cargando sus ofertas..." />
         </div>
-      ) : misOfertas.length === 0 ? (
+      ) : todasLasOfertas.length === 0 ? (
         <EmptyState
           icon={<History className="w-12 h-12 text-gray-300 stroke-1" />}
-          title="Aún no ha realizado ofertas activas"
+          title="Aún no ha realizado ofertas"
           description="Explore las diferentes categorías del catálogo de activos e ingrese sus ofertas antes del cierre oficial."
           action={
             <Link to="/catalogo/tablets">
@@ -201,12 +247,12 @@ export function MisOfertasPage() {
         <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">
-              Postulaciones Vigentes ({misOfertas.length})
+              Listado de Postulaciones ({todasLasOfertas.length})
             </h3>
             <span className="text-[11px] text-gray-400">
               {isSubastaCerrada
                 ? 'La subasta cerró: las ofertas no pueden cancelarse'
-                : 'Puede cancelar una postura antes del cierre (con veto P9)'}
+                : 'Puede cancelar una postura antes del cierre'}
             </span>
           </div>
 
@@ -220,95 +266,90 @@ export function MisOfertasPage() {
                   <th className="py-3.5 px-4 text-right">Precio Base</th>
                   <th className="py-3.5 px-4 text-right">Mi Oferta</th>
                   <th className="py-3.5 px-4">Fecha y Hora</th>
+                  <th className="py-3.5 px-4 text-center">Estado</th>
                   <th className="py-3.5 px-4 text-center">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 font-medium">
-                {misOfertas.map((o) => (
-                  <tr key={o.id_oferta} className="hover:bg-gray-50/60 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-gray-900">
-                        {o.marca} {o.modelo}
-                      </div>
-                      <div className="text-xs text-gray-400 font-mono">ID #{o.id_activo}</div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                        {o.categoria}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 font-mono text-xs text-gray-600">
-                      {o.serialnumber || o.fam || '—'}
-                    </td>
-                    <td className="py-3.5 px-4 text-right font-mono text-gray-500">
-                      {formatUSD(o.precio_base)}
-                    </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-agrotec-800 text-base">
-                      {formatUSD(o.monto)}
-                    </td>
-                    <td className="py-3.5 px-4 text-xs text-gray-500">
-                      {o.fecha_hora_display}
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isSubastaCerrada}
-                        onClick={() => setOfertaACancelar(o)}
-                        className="text-[#8A2733] border-[#8A2733]/30 hover:bg-[#F9D7E0]/50 hover:border-[#8A2733] text-xs font-bold"
-                        leftIcon={<Ban className="w-3.5 h-3.5 text-[#8A2733]" />}
-                      >
-                        {isSubastaCerrada ? 'Finalizada' : 'Cancelar'}
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                {todasLasOfertas.map((o) => {
+                  const isCancelada = o.tipo === 'cancelada';
+
+                  return (
+                    <tr
+                      key={`${o.tipo}-${o.id_oferta}-${o.id_activo}`}
+                      className={`transition-colors ${
+                        isCancelada ? 'bg-rose-50/30 text-gray-500' : 'hover:bg-gray-50/60'
+                      }`}
+                    >
+                      <td className="py-3.5 px-4">
+                        <div
+                          className={`font-bold ${
+                            isCancelada ? 'text-gray-600 line-through' : 'text-gray-900'
+                          }`}
+                        >
+                          {o.marca} {o.modelo}
+                        </div>
+                        <div className="text-xs text-gray-400 font-mono">ID #{o.id_activo}</div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                          {o.categoria}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-xs text-gray-500">
+                        {o.serialnumber || o.fam || '—'}
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-mono text-gray-500">
+                        {o.precio_base !== null ? formatUSD(o.precio_base) : '—'}
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-base">
+                        {isCancelada ? (
+                          <span className="text-gray-400 line-through">
+                            {formatUSD(o.monto)}
+                          </span>
+                        ) : (
+                          <span className="text-agrotec-800">{formatUSD(o.monto)}</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 text-xs text-gray-500">
+                        {o.fecha_hora_display}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        {isCancelada ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#F9D7E0] text-[#8A2733] border border-rose-200">
+                            <Ban className="w-3 h-3" />
+                            Cancelada
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#E8F0EB] text-[#1C5A34] border border-emerald-200">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Activa
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        {isCancelada ? (
+                          <span className="text-xs text-gray-400 italic font-normal">
+                            Anulada
+                          </span>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={isSubastaCerrada}
+                            onClick={() => o.original && setOfertaACancelar(o.original)}
+                            className="text-[#8A2733] border-[#8A2733]/30 hover:bg-[#F9D7E0]/50 hover:border-[#8A2733] text-xs font-bold"
+                            leftIcon={<Ban className="w-3.5 h-3.5 text-[#8A2733]" />}
+                          >
+                            {isSubastaCerrada ? 'Finalizada' : 'Cancelar'}
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
-          </div>
-        </div>
-      )}
-
-      {/* Historial de Vetos / Ofertas Canceladas (Principio P9) */}
-      {vetos.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 bg-[#F9D7E0]/20 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-[#8A2733]" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#8A2733]">
-                Historial de Ofertas Canceladas &mdash; Vetos de Reincidencia (Principio P9)
-              </h3>
-            </div>
-            <span className="text-[11px] text-gray-500">
-              Total vetados: {vetos.length}
-            </span>
-          </div>
-
-          <div className="p-4 divide-y divide-gray-100">
-            {vetos.map((v) => (
-              <div
-                key={`${v.id_activo}-${v.fecha_cancelacion}`}
-                className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
-              >
-                <div>
-                  <div className="font-extrabold text-gray-900">
-                    {v.marca || 'Activo'} {v.modelo || ''} (ID #{v.id_activo})
-                  </div>
-                  <div className="text-gray-500 text-[11px] mt-0.5">
-                    Categoría: {v.categoria || 'Equipos'} &bull; Monto que ofertaste:{' '}
-                    <strong>{formatUSD(v.monto_cancelado)}</strong> &bull; Cancelada:{' '}
-                    {formatFechaAsuncion(v.fecha_cancelacion)}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#F9D7E0] text-[#8A2733] border border-rose-200 inline-flex items-center gap-1">
-                    <Ban className="w-3 h-3" />
-                    Veto de Reincidencia Activo
-                  </span>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       )}
@@ -324,7 +365,7 @@ export function MisOfertasPage() {
               <span>¿Cancelar oferta por {ofertaACancelar.marca} {ofertaACancelar.modelo}?</span>
             </span>
           }
-          description="Confirmación obligatoria de desistimiento voluntario según la Constitución de la Subasta."
+          description="Confirmación obligatoria de anulación de postura según el reglamento de la subasta."
           size="md"
         >
           <div className="space-y-4 text-xs text-gray-700 leading-relaxed">
@@ -339,7 +380,7 @@ export function MisOfertasPage() {
               </div>
               <div className="text-right">
                 <span className="text-[10px] uppercase font-bold text-gray-400 block">
-                  Oferta a Retirar
+                  Oferta a Anular
                 </span>
                 <span className="font-black text-base text-[#8A2733] block">
                   {formatUSD(ofertaACancelar.monto)}
@@ -347,21 +388,17 @@ export function MisOfertasPage() {
               </div>
             </div>
 
-            {/* Advertencia obligatoria de VETO P9 */}
-            <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-900 space-y-2">
-              <div className="font-bold flex items-center gap-1.5 text-sm text-rose-950">
-                <ShieldAlert className="w-4 h-4 text-[#8A2733]" />
-                Principio P9: Regla de Veto de Reincidencia
-              </div>
+            {/* Advertencia con el texto exacto solicitado por el usuario */}
+            <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-900 space-y-2.5">
               <p className="text-xs leading-relaxed text-rose-800">
-                Al confirmar la cancelación, tu oferta de{' '}
+                Al confirmar la anulación, tu oferta de{' '}
                 <strong>{formatUSD(ofertaACancelar.monto)}</strong> será retirada inmediatamente de
-                la subasta.
+                la subasta y pasará al estado <strong>-Cancelada-</strong>.
               </p>
-              <div className="p-2.5 rounded-lg bg-rose-100/70 border border-rose-300 font-semibold text-rose-950 text-[11px]">
-                ⚠️ <strong>IMPORTANTE:</strong> Por política corporativa de equidad,{' '}
-                <u>quedarás vetado permanentemente de volver a ofertar por este activo</u>. Podrás
-                continuar ofertando en cualquier otro bien de la subasta.
+
+              <div className="p-3 rounded-lg bg-rose-100/90 border border-rose-300 font-semibold text-rose-950 text-xs leading-relaxed">
+                ⚠️ <strong>IMPORTANTE:</strong> Al anular su oferta por este activo, no podrá volver a
+                ofertar por el mismo. Podrá continuar ofertando en cualquier otro item de la subasta.
               </div>
             </div>
 
