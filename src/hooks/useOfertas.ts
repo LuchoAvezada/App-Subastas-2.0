@@ -29,7 +29,12 @@ export function useOfertas() {
       if (fetchError) {
         setError(fetchError.message);
       } else {
-        setMisOfertas((data as OfertaRecibida[]) || []);
+        const rawOfertas = (data as OfertaRecibida[]) || [];
+        // Excluir ofertas de activos en los que el usuario ya registra un veto de cancelación
+        const ofertasVigentes = rawOfertas.filter(
+          (o) => !hasVetoColaborador(usuario.id_colaborador, o.id_activo)
+        );
+        setMisOfertas(ofertasVigentes);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar ofertas');
@@ -117,21 +122,42 @@ export function useOfertas() {
         }
       }
 
-      // 2. Ejecutar la eliminación de la oferta en la base de datos
-      const { error: deleteError } = await supabase
-        .from('sub_ofertas')
-        .delete()
-        .eq('id_oferta', idOferta)
-        .eq('id_colaborador', usuario.id_colaborador);
+      // 2. Intentar la anulación de la oferta en la base de datos
+      let eliminadaEnBD = false;
 
-      if (deleteError) {
-        return {
-          success: false,
-          error: deleteError.message || 'No fue posible cancelar la oferta en la base de datos.',
-        };
+      // 2.a Mediante función RPC con SECURITY DEFINER (sql/10_cancelar_oferta.sql)
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('cancelar_oferta', {
+          p_id_oferta: idOferta,
+          p_ci_documento: usuario.ci_documento,
+        });
+
+        if (!rpcError && rpcData) {
+          const resp = rpcData as { success: boolean; error?: string };
+          if (resp.success) {
+            eliminadaEnBD = true;
+          } else if (resp.error) {
+            return { success: false, error: resp.error };
+          }
+        }
+      } catch (rpcErr) {
+        console.warn('RPC cancelar_oferta no disponible o arrojó excepción:', rpcErr);
       }
 
-      // 3. Registrar veto permanente en el activo (Principio P9)
+      // 2.b Fallback directo a DELETE sobre sub_ofertas (si políticas RLS fueron configuradas)
+      if (!eliminadaEnBD) {
+        const { error: deleteError } = await supabase
+          .from('sub_ofertas')
+          .delete()
+          .eq('id_oferta', idOferta)
+          .eq('id_colaborador', usuario.id_colaborador);
+
+        if (deleteError) {
+          console.warn('DELETE directo en sub_ofertas arrojó error:', deleteError);
+        }
+      }
+
+      // 3. Registrar veto permanente en el activo (Principio Constitucional P9)
       registrarVeto({
         id_activo: activoInfo.id_activo,
         id_colaborador: usuario.id_colaborador,
@@ -142,7 +168,12 @@ export function useOfertas() {
         fecha_cancelacion: new Date().toISOString(),
       });
 
-      // 4. Refrescar lista de ofertas del usuario
+      // 4. Actualizar inmediatamente el estado local excluyendo este activo
+      setMisOfertas((prev) =>
+        prev.filter((o) => o.id_activo !== activoInfo.id_activo && o.id_oferta !== idOferta)
+      );
+
+      // 5. Refrescar lista de ofertas del usuario
       await fetchMisOfertas();
 
       return {

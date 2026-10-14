@@ -11,16 +11,13 @@ import { Spinner } from '../components/ui/Spinner';
 import { useToast } from '../components/ui/Toast';
 import {
   History,
-  Download,
   RefreshCw,
   ArrowRight,
   Ban,
   AlertTriangle,
-  Clock,
   CheckCircle2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Papa from 'papaparse';
 import type { OfertaRecibida } from '../types/domain';
 
 export function MisOfertasPage() {
@@ -52,21 +49,26 @@ export function MisOfertasPage() {
   }, [usuario?.id_colaborador]);
 
   // Lista combinada de ofertas para visualización completa: Activas y Canceladas
+  // Garantiza que ningún activo vetado/cancelado aparezca como activo (deduplicación)
   const todasLasOfertas = useMemo(() => {
-    const activas = misOfertas.map((o) => ({
-      tipo: 'activa' as const,
-      id_oferta: o.id_oferta,
-      id_activo: o.id_activo,
-      marca: o.marca,
-      modelo: o.modelo,
-      categoria: o.categoria,
-      serialnumber: o.serialnumber,
-      fam: o.fam,
-      precio_base: o.precio_base,
-      monto: Number(o.monto),
-      fecha_hora_display: o.fecha_hora_display,
-      original: o,
-    }));
+    const vetosSet = new Set(vetos.map((v) => v.id_activo));
+
+    const activas = misOfertas
+      .filter((o) => !vetosSet.has(o.id_activo))
+      .map((o) => ({
+        tipo: 'activa' as const,
+        id_oferta: o.id_oferta,
+        id_activo: o.id_activo,
+        marca: o.marca,
+        modelo: o.modelo,
+        categoria: o.categoria,
+        serialnumber: o.serialnumber,
+        fam: o.fam,
+        precio_base: o.precio_base,
+        monto: Number(o.monto),
+        fecha_hora_display: o.fecha_hora_display,
+        original: o,
+      }));
 
     const canceladas = vetos.map((v) => ({
       tipo: 'cancelada' as const,
@@ -86,30 +88,10 @@ export function MisOfertasPage() {
     return [...activas, ...canceladas];
   }, [misOfertas, vetos]);
 
-  const handleExportCSV = () => {
-    if (todasLasOfertas.length === 0) return;
-
-    const dataToExport = todasLasOfertas.map((o) => ({
-      'ID Oferta': o.tipo === 'activa' ? o.id_oferta : 'N/A',
-      'ID Activo': o.id_activo,
-      'Categoría': o.categoria,
-      'Marca': o.marca || '',
-      'Modelo': o.modelo || '',
-      'Estado': o.tipo === 'activa' ? 'Activa' : 'Cancelada',
-      'Monto Ofertado USD': o.monto,
-      'Fecha y Hora': o.fecha_hora_display,
-    }));
-
-    const csv = Papa.unparse(dataToExport);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `mis_ofertas_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const ofertasActivasCount = useMemo(() => {
+    const vetosSet = new Set(vetos.map((v) => v.id_activo));
+    return misOfertas.filter((o) => !vetosSet.has(o.id_activo)).length;
+  }, [misOfertas, vetos]);
 
   const handleConfirmarCancelacion = async () => {
     if (!ofertaACancelar) return;
@@ -141,7 +123,6 @@ export function MisOfertasPage() {
     }
   };
 
-  const totalOfertadoActivo = misOfertas.reduce((acc, curr) => acc + Number(curr.monto), 0);
   const isSubastaCerrada = countdown.isExpired;
 
   return (
@@ -170,24 +151,16 @@ export function MisOfertasPage() {
           >
             Actualizar
           </Button>
-
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={todasLasOfertas.length === 0}
-            onClick={handleExportCSV}
-            leftIcon={<Download className="w-3.5 h-3.5" />}
-          >
-            Exportar CSV
-          </Button>
         </div>
       </div>
 
-      {/* Summary KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Summary KPI cards: Solo Ofertas Activas y Ofertas Canceladas */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="p-4 rounded-2xl bg-white border border-gray-200/80 shadow-sm">
           <span className="text-xs font-semibold text-gray-500 block">Ofertas Activas</span>
-          <span className="text-2xl font-black text-gray-900 mt-1 block">{misOfertas.length}</span>
+          <span className="text-2xl font-black text-gray-900 mt-1 block">
+            {ofertasActivasCount}
+          </span>
         </div>
 
         <div className="p-4 rounded-2xl bg-white border border-gray-200/80 shadow-sm">
@@ -200,28 +173,6 @@ export function MisOfertasPage() {
               </span>
             )}
           </span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-white border border-gray-200/80 shadow-sm">
-          <span className="text-xs font-semibold text-gray-500 block">Monto Ofertado Activo</span>
-          <span className="text-2xl font-black text-agrotec-800 mt-1 block">
-            {formatUSD(totalOfertadoActivo)}
-          </span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-white border border-gray-200/80 shadow-sm">
-          <span className="text-xs font-semibold text-gray-500 block">Estado de la Subasta</span>
-          {isSubastaCerrada ? (
-            <span className="text-xs font-bold text-[#8A2733] bg-[#F9D7E0] border border-rose-200 px-2.5 py-1 rounded-full inline-flex items-center gap-1.5 mt-2">
-              <Clock className="w-3.5 h-3.5" />
-              Subasta Finalizada
-            </span>
-          ) : (
-            <span className="text-xs font-bold text-[#1C5A34] bg-[#E8F0EB] border border-emerald-200 px-2.5 py-1 rounded-full inline-flex items-center gap-1.5 mt-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#1C5A34] animate-pulse" />
-              En Curso ({countdown.display})
-            </span>
-          )}
         </div>
       </div>
 
