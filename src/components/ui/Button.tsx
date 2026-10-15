@@ -1,6 +1,6 @@
 import { type ButtonHTMLAttributes, forwardRef, type ReactNode } from 'react';
 import { cn } from '../../lib/utils';
-import { Loader2 } from 'lucide-react';
+import { CircleNotchIcon } from '@phosphor-icons/react';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost' | 'success';
@@ -57,7 +57,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {isLoading ? (
-          <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+          <CircleNotchIcon className="w-[18px] h-[18px] animate-spin shrink-0" />
         ) : (
           leftIcon && <span className="shrink-0">{leftIcon}</span>
         )}

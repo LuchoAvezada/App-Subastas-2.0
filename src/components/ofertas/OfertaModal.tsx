@@ -10,15 +10,15 @@ import type { EstadisticaActivo } from '../../hooks/useResumenOfertas';
 import { useAuth } from '../../hooks/useAuth';
 import { hasVetoColaborador } from '../../lib/vetos';
 import {
-  AlertCircle,
-  CheckCircle2,
-  DollarSign,
-  Tag,
-  Info,
-  TrendingUp,
-  Users,
-  Ban,
-} from 'lucide-react';
+  CheckCircleIcon,
+  CurrencyDollarIcon,
+  InfoIcon,
+  ProhibitIcon,
+  TagIcon,
+  TrendUpIcon,
+  UsersIcon,
+  WarningCircleIcon,
+} from '@phosphor-icons/react';
 
 interface OfertaModalProps {
   activo: Activo;
@@ -77,7 +77,7 @@ export function OfertaModal({ activo, resumen, isOpen, onClose, onSuccess }: Ofe
       onClose={onClose}
       title={
         <span className="flex items-center gap-2">
-          <Tag className="w-5 h-5 text-agrotec-700" />
+          <TagIcon className="w-[22px] h-[22px] text-agrotec-700" />
           <span>Realizar Oferta</span>
         </span>
       }
@@ -112,7 +112,7 @@ export function OfertaModal({ activo, resumen, isOpen, onClose, onSuccess }: Ofe
         {/* Live auction stats banner (P9: Anonimato) */}
         <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-[#F5F5F5] border border-[#E4E4E4] text-xs">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-[#1C5A34] shrink-0" />
+            <TrendUpIcon className="w-[18px] h-[18px] text-[#1C5A34] shrink-0" />
             <div>
               <span className="text-[10px] uppercase font-bold text-gray-500 block">Mayor Oferta Actual</span>
               <span className="font-extrabold text-gray-900">
@@ -127,13 +127,13 @@ export function OfertaModal({ activo, resumen, isOpen, onClose, onSuccess }: Ofe
                 {resumen?.totalOfertas || 0} {resumen?.totalOfertas === 1 ? 'oferta' : 'ofertas'}
               </span>
             </div>
-            <Users className="w-4 h-4 text-gray-400 shrink-0" />
+            <UsersIcon className="w-[18px] h-[18px] text-gray-400 shrink-0" />
           </div>
         </div>
 
         {error && (
           <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2.5 animate-fade-in">
-            <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+            <WarningCircleIcon className="w-[18px] h-[18px] text-red-500 shrink-0 mt-0.5" />
             <span className="font-medium leading-relaxed">{error}</span>
           </div>
         )}
@@ -149,13 +149,13 @@ export function OfertaModal({ activo, resumen, isOpen, onClose, onSuccess }: Ofe
             placeholder={`Mínimo ${activo.precio_base}`}
             value={monto}
             onChange={(e) => setMonto(e.target.value)}
-            leftIcon={<DollarSign className="w-4 h-4" />}
+            leftIcon={<CurrencyDollarIcon className="w-[18px] h-[18px]" />}
             helperText={`Debe ser igual o mayor a ${formatUSD(activo.precio_base)}`}
           />
 
           {isVetado && (
             <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2.5 text-xs text-rose-900 animate-fade-in">
-              <Ban className="w-4 h-4 text-[#8A2733] shrink-0 mt-0.5" />
+              <ProhibitIcon className="w-[18px] h-[18px] text-[#8A2733] shrink-0 mt-0.5" />
               <span>
                 ⚠️ <strong>IMPORTANTE:</strong> Al anular su oferta por este activo, no podrá volver a
                 ofertar por el mismo. Podrá continuar ofertando en cualquier otro item de la subasta.
@@ -165,7 +165,7 @@ export function OfertaModal({ activo, resumen, isOpen, onClose, onSuccess }: Ofe
 
           {ofertaPrevia && (
             <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-start gap-2 text-xs text-amber-900">
-              <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <InfoIcon className="w-[18px] h-[18px] text-amber-600 shrink-0 mt-0.5" />
               <span>
                 Ya enviaste una oferta de <strong>{formatUSD(ofertaPrevia.monto)}</strong> por este activo.
               </span>
@@ -181,7 +181,7 @@ export function OfertaModal({ activo, resumen, isOpen, onClose, onSuccess }: Ofe
               variant="primary"
               disabled={!!ofertaPrevia || isVetado}
               isLoading={submitting}
-              leftIcon={<CheckCircle2 className="w-4 h-4" />}
+              leftIcon={<CheckCircleIcon className="w-[18px] h-[18px]" />}
             >
               Confirmar Oferta
             </Button>

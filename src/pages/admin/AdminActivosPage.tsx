@@ -9,7 +9,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { useToast } from '../../components/ui/Toast';
 import { formatUSD } from '../../lib/utils';
 import type { Activo } from '../../types/domain';
-import { PackagePlus, Search, Edit3, Trash2, RefreshCw, Layers, Image as ImageIcon, AlertTriangle, AlertCircle } from 'lucide-react';
+import { ArrowsClockwiseIcon, ImageIcon, MagnifyingGlassIcon, PackageIcon, PencilSimpleLineIcon, StackIcon, TrashIcon, WarningCircleIcon, WarningIcon } from '@phosphor-icons/react';
 
 export function AdminActivosPage() {
   const [activos, setActivos] = useState<Activo[]>([]);
@@ -133,7 +133,7 @@ export function AdminActivosPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200/80">
         <div>
           <div className="flex items-center gap-2 text-agrotec-700 text-xs font-bold uppercase tracking-wider mb-1">
-            <PackagePlus className="w-3.5 h-3.5" />
+            <PackageIcon className="w-4 h-4" />
             <span>Gestión de Inventario</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
@@ -149,7 +149,7 @@ export function AdminActivosPage() {
             variant="outline"
             size="sm"
             onClick={fetchActivos}
-            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            leftIcon={<ArrowsClockwiseIcon className="w-4 h-4" />}
           >
             Actualizar
           </Button>
@@ -158,7 +158,7 @@ export function AdminActivosPage() {
             variant="primary"
             size="sm"
             onClick={handleNew}
-            leftIcon={<PackagePlus className="w-4 h-4" />}
+            leftIcon={<PackageIcon className="w-[18px] h-[18px]" />}
           >
             Nuevo Activo
           </Button>
@@ -172,7 +172,7 @@ export function AdminActivosPage() {
             placeholder="Buscar por marca, modelo, S/N..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            leftIcon={<Search className="w-4 h-4" />}
+            leftIcon={<MagnifyingGlassIcon className="w-[18px] h-[18px]" />}
           />
         </div>
 
@@ -199,7 +199,7 @@ export function AdminActivosPage() {
         </div>
       ) : filteredActivos.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200/80 p-12 text-center">
-          <Layers className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <StackIcon weight="light" className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <h3 className="text-base font-semibold text-gray-800">No se encontraron activos</h3>
           <p className="text-xs text-gray-500 mt-1 mb-4">No hay registros con los filtros actuales.</p>
           <Button variant="outline" size="sm" onClick={handleNew}>
@@ -238,7 +238,7 @@ export function AdminActivosPage() {
                         />
                       ) : (
                         <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200/80 flex items-center justify-center text-gray-400">
-                          <ImageIcon className="w-4 h-4" />
+                          <ImageIcon className="w-[18px] h-[18px]" />
                         </div>
                       )}
                     </td>
@@ -272,7 +272,7 @@ export function AdminActivosPage() {
                           className="p-1.5 text-gray-500 hover:text-agrotec-800 hover:bg-agrotec-50 rounded-lg transition-colors"
                           title="Editar activo"
                         >
-                          <Edit3 className="w-4 h-4" />
+                          <PencilSimpleLineIcon className="w-[18px] h-[18px]" />
                         </button>
                         <button
                           type="button"
@@ -283,7 +283,7 @@ export function AdminActivosPage() {
                           className="p-1.5 text-gray-400 hover:text-[#8A2733] hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                           title="Eliminar activo"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <TrashIcon className="w-[18px] h-[18px]" />
                         </button>
                       </div>
                     </td>
@@ -327,7 +327,7 @@ export function AdminActivosPage() {
         <div className="space-y-4">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-full bg-red-50 text-[#8A2733] flex items-center justify-center shrink-0">
-              <AlertTriangle className="w-5 h-5" />
+              <WarningIcon className="w-[22px] h-[22px]" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-gray-900">
@@ -341,7 +341,7 @@ export function AdminActivosPage() {
 
           {deleteError && (
             <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+              <WarningCircleIcon className="w-[18px] h-[18px] text-red-500 shrink-0 mt-0.5" />
               <div className="leading-relaxed font-medium">{deleteError}</div>
             </div>
           )}
@@ -356,7 +356,7 @@ export function AdminActivosPage() {
                 />
               ) : (
                 <div className="w-12 h-12 rounded-lg bg-gray-200/80 border border-gray-300 flex items-center justify-center text-gray-400 shrink-0">
-                  <ImageIcon className="w-5 h-5" />
+                  <ImageIcon className="w-[22px] h-[22px]" />
                 </div>
               )}
               <div className="min-w-0 flex-1">
@@ -388,7 +388,7 @@ export function AdminActivosPage() {
               variant="danger"
               size="sm"
               isLoading={isDeleting}
-              leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+              leftIcon={<TrashIcon className="w-4 h-4" />}
               onClick={handleConfirmDelete}
             >
               Sí, Eliminar Activo

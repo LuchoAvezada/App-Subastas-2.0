@@ -1,24 +1,24 @@
 import { useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  Tablet,
-  Smartphone,
-  Laptop,
-  Boxes,
-  Gavel,
-  History,
-  Trophy,
-  PackagePlus,
-  Users,
-  Settings,
-  LogOut,
-  Clock,
-  ShieldCheck,
-  LayoutDashboard,
-  X,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+  CaretLeftIcon,
+  CaretRightIcon,
+  ClockCounterClockwiseIcon,
+  ClockIcon,
+  DeviceMobileIcon,
+  DeviceTabletIcon,
+  DevicesIcon,
+  GavelIcon,
+  GearSixIcon,
+  LaptopIcon,
+  PackageIcon,
+  ShieldCheckIcon,
+  SignOutIcon,
+  SquaresFourIcon,
+  TrophyIcon,
+  UsersIcon,
+  XIcon,
+} from '@phosphor-icons/react';
 import { useAuth } from '../../hooks/useAuth';
 import { useCountdown } from '../../hooks/useCountdown';
 import { cn } from '../../lib/utils';
@@ -100,7 +100,7 @@ export function Sidebar({
                 title="Expandir barra lateral"
                 className="hidden lg:flex p-1.5 rounded-lg text-gray-500 hover:text-[#1C5A34] hover:bg-[#E8F0EB] transition-colors cursor-pointer"
               >
-                <ChevronRight className="w-5 h-5" />
+                <CaretRightIcon className="w-[22px] h-[22px]" />
               </button>
             </div>
           ) : (
@@ -119,7 +119,7 @@ export function Sidebar({
                   title="Compactar barra lateral"
                   className="hidden lg:flex p-1.5 rounded-lg text-gray-400 hover:text-[#1C5A34] hover:bg-[#E8F0EB] transition-colors cursor-pointer"
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  <CaretLeftIcon className="w-[22px] h-[22px]" />
                 </button>
                 {/* Botón para cerrar en móvil */}
                 <button
@@ -127,7 +127,7 @@ export function Sidebar({
                   aria-label="Cerrar menú"
                   className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 lg:hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1C5A34]"
                 >
-                  <X className="w-5 h-5" aria-hidden="true" />
+                  <XIcon className="w-[22px] h-[22px]" aria-hidden="true" />
                 </button>
               </div>
             </>
@@ -147,9 +147,9 @@ export function Sidebar({
                   : 'Por definir'
               }`}
             >
-              <Clock
+              <ClockIcon
                 className={cn(
-                  'w-5 h-5',
+                  'w-[22px] h-[22px]',
                   countdown.isExpired ? 'text-[#8A2733]' : 'text-[#1C5A34]'
                 )}
               />
@@ -164,7 +164,7 @@ export function Sidebar({
             <div className="p-3.5 rounded-xl bg-white text-[#262626] border border-[#E4E4E4] shadow-none">
               <div className="flex items-center justify-between text-xs text-[#6D6D6D] mb-1.5 font-medium">
                 <span className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-[#1C5A34]" />
+                  <ClockIcon className="w-4 h-4 text-[#1C5A34]" />
                   Cierre de Subasta
                 </span>
                 {countdown.isExpired ? (
@@ -210,7 +210,7 @@ export function Sidebar({
             )}
             <nav className="space-y-1">
               <NavLink to="/" end className={navItemClass('Inicio')} onClick={onClose} title="Inicio">
-                <LayoutDashboard className="w-4 h-4 shrink-0" />
+                <SquaresFourIcon className="w-[18px] h-[18px] shrink-0" />
                 {!isCollapsed && <span>Inicio</span>}
               </NavLink>
               <NavLink
@@ -219,7 +219,7 @@ export function Sidebar({
                 onClick={onClose}
                 title="Mis Ofertas"
               >
-                <History className="w-4 h-4 shrink-0" />
+                <ClockCounterClockwiseIcon className="w-[18px] h-[18px] shrink-0" />
                 {!isCollapsed && <span>Mis Ofertas</span>}
               </NavLink>
               <NavLink
@@ -228,7 +228,7 @@ export function Sidebar({
                 onClick={onClose}
                 title="Resultados Finales"
               >
-                <Trophy className="w-4 h-4 shrink-0" />
+                <TrophyIcon className="w-[18px] h-[18px] shrink-0" />
                 {!isCollapsed && <span>Resultados Finales</span>}
               </NavLink>
             </nav>
@@ -250,7 +250,7 @@ export function Sidebar({
                 onClick={onClose}
                 title="Tablets"
               >
-                <Tablet className="w-4 h-4 shrink-0" />
+                <DeviceTabletIcon className="w-[18px] h-[18px] shrink-0" />
                 {!isCollapsed && <span>Tablets</span>}
               </NavLink>
               <NavLink
@@ -259,7 +259,7 @@ export function Sidebar({
                 onClick={onClose}
                 title="Celulares"
               >
-                <Smartphone className="w-4 h-4 shrink-0" />
+                <DeviceMobileIcon className="w-[18px] h-[18px] shrink-0" />
                 {!isCollapsed && <span>Celulares</span>}
               </NavLink>
               <NavLink
@@ -268,7 +268,7 @@ export function Sidebar({
                 onClick={onClose}
                 title="Notebooks"
               >
-                <Laptop className="w-4 h-4 shrink-0" />
+                <LaptopIcon className="w-[18px] h-[18px] shrink-0" />
                 {!isCollapsed && <span>Notebooks</span>}
               </NavLink>
               <NavLink
@@ -277,7 +277,7 @@ export function Sidebar({
                 onClick={onClose}
                 title="Otros Equipos"
               >
-                <Boxes className="w-4 h-4 shrink-0" />
+                <DevicesIcon className="w-[18px] h-[18px] shrink-0" />
                 {!isCollapsed && <span>Otros Equipos</span>}
               </NavLink>
             </nav>
@@ -288,7 +288,7 @@ export function Sidebar({
             <div>
               {!isCollapsed ? (
                 <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-700 uppercase tracking-wider px-3 mb-2">
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                  <ShieldCheckIcon className="w-4 h-4 text-amber-600" />
                   <span>Administración</span>
                 </div>
               ) : (
@@ -301,7 +301,7 @@ export function Sidebar({
                   onClick={onClose}
                   title="Panel de Ofertas"
                 >
-                  <Gavel className="w-4 h-4 text-amber-600 shrink-0" />
+                  <GavelIcon className="w-[18px] h-[18px] text-amber-600 shrink-0" />
                   {!isCollapsed && <span>Panel de Ofertas</span>}
                 </NavLink>
                 <NavLink
@@ -310,7 +310,7 @@ export function Sidebar({
                   onClick={onClose}
                   title="Carga de Activos"
                 >
-                  <PackagePlus className="w-4 h-4 text-amber-600 shrink-0" />
+                  <PackageIcon className="w-[18px] h-[18px] text-amber-600 shrink-0" />
                   {!isCollapsed && <span>Carga de Activos</span>}
                 </NavLink>
                 <NavLink
@@ -319,7 +319,7 @@ export function Sidebar({
                   onClick={onClose}
                   title="Colaboradores"
                 >
-                  <Users className="w-4 h-4 text-amber-600 shrink-0" />
+                  <UsersIcon className="w-[18px] h-[18px] text-amber-600 shrink-0" />
                   {!isCollapsed && <span>Colaboradores</span>}
                 </NavLink>
                 <NavLink
@@ -328,7 +328,7 @@ export function Sidebar({
                   onClick={onClose}
                   title="Configuración"
                 >
-                  <Settings className="w-4 h-4 text-amber-600 shrink-0" />
+                  <GearSixIcon className="w-[18px] h-[18px] text-amber-600 shrink-0" />
                   {!isCollapsed && <span>Configuración</span>}
                 </NavLink>
               </nav>
@@ -357,7 +357,7 @@ export function Sidebar({
                 title="Cerrar Sesión"
                 className="p-2 rounded-lg text-gray-500 hover:text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
               >
-                <LogOut className="w-4 h-4" />
+                <SignOutIcon className="w-[18px] h-[18px]" />
               </button>
             </>
           ) : (
@@ -383,7 +383,7 @@ export function Sidebar({
                 onClick={handleLogout}
                 className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-gray-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-gray-200/80 hover:border-red-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-agrotec-500"
               >
-                <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
+                <SignOutIcon className="w-4 h-4" aria-hidden="true" />
                 <span>Cerrar Sesión</span>
               </button>
             </>

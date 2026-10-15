@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react';
+import { CircleNotchIcon } from '@phosphor-icons/react';
 import { cn } from '../../lib/utils';
 
 export interface SpinnerProps {
@@ -20,7 +20,7 @@ export function Spinner({ size = 'md', className, label }: SpinnerProps) {
       role="status"
       aria-live="polite"
     >
-      <Loader2
+      <CircleNotchIcon
         className={cn('animate-spin text-agrotec-700', sizes[size], className)}
         aria-hidden="true"
       />

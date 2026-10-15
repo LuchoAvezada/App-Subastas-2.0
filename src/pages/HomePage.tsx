@@ -4,15 +4,15 @@ import { useCountdown } from '../hooks/useCountdown';
 import { useOfertas } from '../hooks/useOfertas';
 import { useActivos } from '../hooks/useActivos';
 import {
-  Tablet,
-  Smartphone,
-  Laptop,
-  Boxes,
-  Clock,
-  ArrowRight,
-  Award,
-  Sparkles,
-} from 'lucide-react';
+  ArrowRightIcon,
+  ClockIcon,
+  DeviceMobileIcon,
+  DeviceTabletIcon,
+  DevicesIcon,
+  LaptopIcon,
+  MedalIcon,
+  SparkleIcon,
+} from '@phosphor-icons/react';
 
 export function HomePage() {
   const { usuario } = useAuth();
@@ -27,28 +27,28 @@ export function HomePage() {
       slug: 'tablets',
       title: 'Tablets',
       description: 'Samsung, Apple, Lenovo y más',
-      icon: <Tablet className="w-7 h-7 text-agrotec-700" />,
+      icon: <DeviceTabletIcon className="w-7 h-7 text-agrotec-700" />,
       count: activos.filter((a) => a.id_categoria === 1 && a.estado === 'Disponible').length,
     },
     {
       slug: 'celulares',
       title: 'Celulares',
       description: 'Equipos corporativos renovados',
-      icon: <Smartphone className="w-7 h-7 text-blue-700" />,
+      icon: <DeviceMobileIcon className="w-7 h-7 text-blue-700" />,
       count: activos.filter((a) => a.id_categoria === 2 && a.estado === 'Disponible').length,
     },
     {
       slug: 'notebooks',
       title: 'Notebooks',
       description: 'Laptops Dell, Lenovo, HP de alto rendimiento',
-      icon: <Laptop className="w-7 h-7 text-indigo-700" />,
+      icon: <LaptopIcon className="w-7 h-7 text-indigo-700" />,
       count: activos.filter((a) => a.id_categoria === 3 && a.estado === 'Disponible').length,
     },
     {
       slug: 'otros',
       title: 'Otros Equipos',
       description: 'Monitores, periféricos, audio y UPS',
-      icon: <Boxes className="w-7 h-7 text-amber-700" />,
+      icon: <DevicesIcon className="w-7 h-7 text-amber-700" />,
       count: activos.filter((a) => a.id_categoria === 4 && a.estado === 'Disponible').length,
     },
   ];
@@ -61,7 +61,7 @@ export function HomePage() {
 
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-agrotec-100 text-xs font-semibold mb-4 backdrop-blur-sm">
-            <Sparkles className="w-3.5 h-3.5 text-agrotec-300" />
+            <SparkleIcon className="w-4 h-4 text-agrotec-300" />
             <span>Subasta Interna Agrotec 2026</span>
           </div>
 
@@ -78,7 +78,7 @@ export function HomePage() {
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-agrotec-900 font-bold text-sm shadow-md hover:bg-agrotec-50 transition-all active:scale-95"
             >
               <span>Explorar Catálogo</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRightIcon className="w-[18px] h-[18px]" />
             </Link>
             <Link
               to="/mis-ofertas"
@@ -95,7 +95,7 @@ export function HomePage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 text-agrotec-700 text-xs font-bold uppercase tracking-wider mb-1">
-              <Clock className="w-4 h-4 text-agrotec-600 animate-pulse" />
+              <ClockIcon className="w-[18px] h-[18px] text-agrotec-600 animate-pulse" />
               <span>Tiempo Restante para Ofertar</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-gray-900">
@@ -173,7 +173,7 @@ export function HomePage() {
 
               <div className="mt-5 pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-bold text-agrotec-800 group-hover:translate-x-1 transition-transform">
                 <span>Ver catálogo</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRightIcon className="w-4 h-4" />
               </div>
             </Link>
           ))}
@@ -183,7 +183,7 @@ export function HomePage() {
       {/* Business Rules and Criteria Card */}
       <div className="bg-white rounded-2xl border border-gray-200/90 p-6 sm:p-8 shadow-sm">
         <h3 className="text-base font-black text-gray-900 tracking-tight flex items-center gap-2 mb-4">
-          <Award className="w-5 h-5 text-agrotec-700" />
+          <MedalIcon className="w-[22px] h-[22px] text-agrotec-700" />
           <span>Reglas de Adjudicación de la Subasta</span>
         </h3>
 

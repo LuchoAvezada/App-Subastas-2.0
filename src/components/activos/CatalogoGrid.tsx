@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { ActivoCard } from './ActivoCard';
 import { EmptyState } from '../ui/EmptyState';
 import { Input } from '../ui/Input';
-import { Search, Filter, Layers } from 'lucide-react';
+import { FunnelIcon, MagnifyingGlassIcon, StackIcon } from '@phosphor-icons/react';
 import { useResumenOfertas } from '../../hooks/useResumenOfertas';
 import type { Activo } from '../../types/domain';
 
@@ -42,13 +42,13 @@ export function CatalogoGrid({ activos, loading, onRefresh, categoryTitle }: Cat
             placeholder="Buscar por marca, modelo o S/N..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            leftIcon={<Search className="w-4 h-4" />}
+            leftIcon={<MagnifyingGlassIcon className="w-[18px] h-[18px]" />}
           />
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <span className="text-xs font-semibold text-gray-500 flex items-center gap-1">
-            <Filter className="w-3.5 h-3.5" /> Estado:
+            <FunnelIcon className="w-4 h-4" /> Estado:
           </span>
           <select
             value={filterEstado}
@@ -82,7 +82,7 @@ export function CatalogoGrid({ activos, loading, onRefresh, categoryTitle }: Cat
         </div>
       ) : filtered.length === 0 ? (
         <EmptyState
-          icon={<Layers className="w-12 h-12 text-gray-300" />}
+          icon={<StackIcon weight="light" className="w-12 h-12 text-gray-300" />}
           title="No se encontraron activos"
           description={
             searchTerm

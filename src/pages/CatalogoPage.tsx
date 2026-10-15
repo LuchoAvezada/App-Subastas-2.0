@@ -2,7 +2,7 @@ import { useParams, Navigate } from 'react-router-dom';
 import { useActivos } from '../hooks/useActivos';
 import { CatalogoGrid } from '../components/activos/CatalogoGrid';
 import { CATEGORIA_MAP, type CategoriaSlug } from '../types/domain';
-import { RefreshCw, Tag } from 'lucide-react';
+import { ArrowsClockwiseIcon, TagIcon } from '@phosphor-icons/react';
 import { Button } from '../components/ui/Button';
 
 export function CatalogoPage() {
@@ -29,7 +29,7 @@ export function CatalogoPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200/80">
         <div>
           <div className="flex items-center gap-2 text-agrotec-700 text-xs font-bold uppercase tracking-wider mb-1">
-            <Tag className="w-3.5 h-3.5" />
+            <TagIcon className="w-4 h-4" />
             <span>Catálogo Oficial</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
@@ -45,7 +45,7 @@ export function CatalogoPage() {
             variant="outline"
             size="sm"
             onClick={() => refetch()}
-            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            leftIcon={<ArrowsClockwiseIcon className="w-4 h-4" />}
           >
             Actualizar
           </Button>

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { PackageOpen } from 'lucide-react';
+import { PackageIcon } from '@phosphor-icons/react';
 
 export interface EmptyStateProps {
   icon?: ReactNode;
@@ -9,7 +9,7 @@ export interface EmptyStateProps {
 }
 
 export function EmptyState({
-  icon = <PackageOpen className="w-12 h-12 text-gray-400 stroke-1" />,
+  icon = <PackageIcon weight="light" className="w-12 h-12 text-gray-400" />,
   title,
   description,
   action,

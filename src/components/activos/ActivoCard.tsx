@@ -9,7 +9,13 @@ import type { Activo } from '../../types/domain';
 import type { EstadisticaActivo } from '../../hooks/useResumenOfertas';
 import { useAuth } from '../../hooks/useAuth';
 import { hasVetoColaborador } from '../../lib/vetos';
-import { Gavel, ImageOff, ShieldAlert, TrendingUp, Ban } from 'lucide-react';
+import {
+  GavelIcon,
+  ImageBrokenIcon,
+  ProhibitIcon,
+  ShieldWarningIcon,
+  TrendUpIcon,
+} from '@phosphor-icons/react';
 
 interface ActivoCardProps {
   activo: Activo;
@@ -58,7 +64,7 @@ export function ActivoCard({ activo, resumen, onOfertaSuccess }: ActivoCardProps
             />
           ) : (
             <div className="flex flex-col items-center justify-center text-gray-300 gap-2">
-              <ImageOff className="w-10 h-10 stroke-1" />
+              <ImageBrokenIcon weight="light" className="w-10 h-10" />
               <span className="text-[11px] font-medium text-gray-400">Sin fotografía</span>
             </div>
           )}
@@ -96,7 +102,7 @@ export function ActivoCard({ activo, resumen, onOfertaSuccess }: ActivoCardProps
               </div>
               <div className="text-right">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block flex items-center justify-end gap-1">
-                  <TrendingUp className="w-3 h-3 text-[#1C5A34]" /> Mayor Oferta
+                  <TrendUpIcon className="w-3.5 h-3.5 text-[#1C5A34]" /> Mayor Oferta
                 </span>
                 <span className="text-sm font-black text-[#1C5A34] tracking-tight block">
                   {montoLider ? formatUSD(montoLider) : 'Sin ofertas'}
@@ -113,7 +119,7 @@ export function ActivoCard({ activo, resumen, onOfertaSuccess }: ActivoCardProps
 
             {isVetado && (
               <div className="mb-2 p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-medium flex items-center gap-1.5">
-                <Ban className="w-3.5 h-3.5 text-[#8A2733] shrink-0" />
+                <ProhibitIcon className="w-4 h-4 text-[#8A2733] shrink-0" />
                 <span>Oferta cancelada: no puede volver a ofertar por este item</span>
               </div>
             )}
@@ -126,11 +132,11 @@ export function ActivoCard({ activo, resumen, onOfertaSuccess }: ActivoCardProps
               onClick={() => setModalOpen(true)}
               leftIcon={
                 isVetado ? (
-                  <Ban className="w-4 h-4 text-[#8A2733]" />
+                  <ProhibitIcon className="w-[18px] h-[18px] text-[#8A2733]" />
                 ) : isAvailable ? (
-                  <Gavel className="w-4 h-4" />
+                  <GavelIcon className="w-[18px] h-[18px]" />
                 ) : (
-                  <ShieldAlert className="w-4 h-4 text-gray-400" />
+                  <ShieldWarningIcon className="w-[18px] h-[18px] text-gray-400" />
                 )
               }
             >

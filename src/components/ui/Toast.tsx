@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import { CheckCircleIcon, InfoIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react';
 import { cn } from '../../lib/utils';
 
 export type ToastType = 'success' | 'error' | 'info';
@@ -63,13 +63,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             )}
           >
             {t.type === 'success' && (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <CheckCircleIcon className="w-[22px] h-[22px] text-emerald-600 shrink-0 mt-0.5" />
             )}
             {t.type === 'error' && (
-              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+              <WarningCircleIcon className="w-[22px] h-[22px] text-rose-600 shrink-0 mt-0.5" />
             )}
             {t.type === 'info' && (
-              <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+              <InfoIcon className="w-[22px] h-[22px] text-blue-600 shrink-0 mt-0.5" />
             )}
 
             <div className="flex-1 text-sm font-medium leading-relaxed">{t.message}</div>
@@ -79,7 +79,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               className="shrink-0 grid place-items-center w-6 h-6 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-agrotec-500"
               aria-label="Cerrar notificación"
             >
-              <X className="w-4 h-4" aria-hidden="true" />
+              <XIcon className="w-[18px] h-[18px]" aria-hidden="true" />
             </button>
           </div>
         ))}

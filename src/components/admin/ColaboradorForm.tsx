@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import { useToast } from '../ui/Toast';
 import { ROL } from '../../types/domain';
 import type { DatosColaborador } from '../../types/domain';
-import { AlertCircle } from 'lucide-react';
+import { WarningCircleIcon } from '@phosphor-icons/react';
 
 interface Cargo {
   id_cargo: number;
@@ -104,7 +104,7 @@ export function ColaboradorForm({ colaborador, onSuccess, onCancel }: Props) {
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2">
-          <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+          <WarningCircleIcon className="w-[18px] h-[18px] text-red-500 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}

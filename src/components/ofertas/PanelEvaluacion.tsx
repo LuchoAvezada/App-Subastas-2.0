@@ -6,14 +6,14 @@ import { Spinner } from '../ui/Spinner';
 import { useToast } from '../ui/Toast';
 import { Modal } from '../ui/Modal';
 import {
-  Gavel,
-  RefreshCw,
-  Download,
-  AlertTriangle,
-  Trophy,
-  Layers,
-  ChevronRight,
-} from 'lucide-react';
+  ArrowsClockwiseIcon,
+  CaretRightIcon,
+  DownloadSimpleIcon,
+  GavelIcon,
+  StackIcon,
+  TrophyIcon,
+  WarningIcon,
+} from '@phosphor-icons/react';
 import type { OfertaRecibida } from '../../types/domain';
 import Papa from 'papaparse';
 import { useNavigate } from 'react-router-dom';
@@ -153,7 +153,7 @@ export function PanelEvaluacion() {
             variant="outline"
             size="sm"
             onClick={fetchOfertas}
-            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            leftIcon={<ArrowsClockwiseIcon className="w-4 h-4" />}
           >
             Actualizar
           </Button>
@@ -163,7 +163,7 @@ export function PanelEvaluacion() {
             size="sm"
             disabled={ofertas.length === 0}
             onClick={handleExportAllCSV}
-            leftIcon={<Download className="w-3.5 h-3.5" />}
+            leftIcon={<DownloadSimpleIcon className="w-4 h-4" />}
           >
             Exportar CSV
           </Button>
@@ -172,7 +172,7 @@ export function PanelEvaluacion() {
             variant="primary"
             size="sm"
             onClick={() => setIsProcessModalOpen(true)}
-            leftIcon={<Gavel className="w-4 h-4 text-amber-300" />}
+            leftIcon={<GavelIcon className="w-[18px] h-[18px] text-amber-300" />}
             className="bg-agrotec-900 hover:bg-agrotec-950"
           >
             Procesar Ganadores
@@ -186,7 +186,7 @@ export function PanelEvaluacion() {
         </div>
       ) : ofertas.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200/80 p-12 text-center">
-          <Layers className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <StackIcon weight="light" className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <h3 className="text-base font-semibold text-gray-800">No hay ofertas registradas</h3>
           <p className="text-xs text-gray-500 mt-1">Aún no se han recibido posturas por ningún activo de la subasta.</p>
         </div>
@@ -233,7 +233,7 @@ export function PanelEvaluacion() {
                       <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-agrotec-100 text-agrotec-800">
                         {item.totalOfertas} {item.totalOfertas === 1 ? 'oferta' : 'ofertas'}
                       </span>
-                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                      <CaretRightIcon className="w-[18px] h-[18px] text-gray-400" />
                     </div>
                   </button>
                 );
@@ -275,7 +275,7 @@ export function PanelEvaluacion() {
                   <div className="mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center">
-                        <Trophy className="w-4 h-4" />
+                        <TrophyIcon className="w-[18px] h-[18px]" />
                       </div>
                       <div>
                         <span className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider block">
@@ -314,7 +314,7 @@ export function PanelEvaluacion() {
                           <td className="py-3 px-4 font-mono font-bold">
                             {idx === 0 ? (
                               <span className="inline-flex items-center gap-1 text-emerald-700 font-black">
-                                <Trophy className="w-3.5 h-3.5" /> #1
+                                <TrophyIcon className="w-4 h-4" /> #1
                               </span>
                             ) : (
                               `#${idx + 1}`
@@ -359,7 +359,7 @@ export function PanelEvaluacion() {
       >
         <div className="space-y-4">
           <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <WarningIcon className="w-[22px] h-[22px] text-amber-600 shrink-0 mt-0.5" />
             <div className="leading-relaxed">
               <strong>Atención:</strong> Al ejecutar el procedimiento <code>procesar_ganadores()</code>, el sistema limpiará resultados anteriores, evaluará todas las ofertas aplicando los criterios de monto, jerarquía y antigüedad, y marcará los activos como <strong>Adjudicados</strong>.
             </div>
@@ -381,7 +381,7 @@ export function PanelEvaluacion() {
               variant="primary"
               onClick={handleEjecutarAdjudicacion}
               isLoading={processing}
-              leftIcon={<Gavel className="w-4 h-4" />}
+              leftIcon={<GavelIcon className="w-[18px] h-[18px]" />}
             >
               Confirmar y Adjudicar
             </Button>

@@ -4,7 +4,7 @@ import { formatUSD } from '../lib/utils';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Spinner } from '../components/ui/Spinner';
-import { Trophy, Download, RefreshCw, Award, CheckCircle2 } from 'lucide-react';
+import { ArrowsClockwiseIcon, CheckCircleIcon, DownloadSimpleIcon, MedalIcon, TrophyIcon } from '@phosphor-icons/react';
 import type { ResultadoDetalle } from '../types/domain';
 import Papa from 'papaparse';
 
@@ -70,7 +70,7 @@ export function ResultadosPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200/80">
         <div>
           <div className="flex items-center gap-2 text-agrotec-700 text-xs font-bold uppercase tracking-wider mb-1">
-            <Trophy className="w-3.5 h-3.5" />
+            <TrophyIcon className="w-4 h-4" />
             <span>Resultados Oficiales</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
@@ -86,7 +86,7 @@ export function ResultadosPage() {
             variant="outline"
             size="sm"
             onClick={fetchResultados}
-            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            leftIcon={<ArrowsClockwiseIcon className="w-4 h-4" />}
           >
             Actualizar
           </Button>
@@ -96,7 +96,7 @@ export function ResultadosPage() {
             size="sm"
             disabled={resultados.length === 0}
             onClick={handleExportCSV}
-            leftIcon={<Download className="w-3.5 h-3.5" />}
+            leftIcon={<DownloadSimpleIcon className="w-4 h-4" />}
           >
             Exportar CSV
           </Button>
@@ -111,7 +111,7 @@ export function ResultadosPage() {
             <span className="text-2xl font-black text-gray-900 mt-1 block">{resultados.length}</span>
           </div>
           <div className="p-3 bg-agrotec-50 rounded-2xl text-agrotec-800">
-            <CheckCircle2 className="w-6 h-6" />
+            <CheckCircleIcon className="w-6 h-6" />
           </div>
         </div>
 
@@ -123,7 +123,7 @@ export function ResultadosPage() {
             </span>
           </div>
           <div className="p-3 bg-agrotec-50 rounded-2xl text-agrotec-800">
-            <Award className="w-6 h-6" />
+            <MedalIcon className="w-6 h-6" />
           </div>
         </div>
       </div>
@@ -135,7 +135,7 @@ export function ResultadosPage() {
         </div>
       ) : resultados.length === 0 ? (
         <EmptyState
-          icon={<Trophy className="w-12 h-12 text-gray-300 stroke-1" />}
+          icon={<TrophyIcon weight="light" className="w-12 h-12 text-gray-300" />}
           title="Aún no se han publicado resultados"
           description="Los resultados oficiales estarán disponibles una vez que finalice la subasta y la administración procese la adjudicación."
         />

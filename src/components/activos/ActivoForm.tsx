@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import { useToast } from '../ui/Toast';
 import type { Activo } from '../../types/domain';
 import { comprimirImagen } from '../../lib/image';
-import { Upload, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { ImageIcon, UploadSimpleIcon, WarningCircleIcon } from '@phosphor-icons/react';
 
 interface ActivoFormProps {
   activoToEdit?: Activo | null;
@@ -137,7 +137,7 @@ export function ActivoForm({ activoToEdit, onSuccess, onCancel }: ActivoFormProp
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2 animate-fade-in">
-          <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+          <WarningCircleIcon className="w-[18px] h-[18px] text-red-500 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
@@ -231,13 +231,13 @@ export function ActivoForm({ activoToEdit, onSuccess, onCancel }: ActivoFormProp
               />
             ) : (
               <div className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 grid place-items-center text-gray-300 shrink-0">
-                <ImageIcon className="w-6 h-6" />
+                <ImageIcon weight="light" className="w-6 h-6" />
               </div>
             )}
 
             <div className="flex flex-col items-start gap-2">
               <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus-within:ring-2 focus-within:ring-agrotec-500 shadow-sm">
-                <Upload className="w-3.5 h-3.5 text-gray-500" />
+                <UploadSimpleIcon className="w-4 h-4 text-gray-500" />
                 <span>
                   {uploadingImage ? 'Procesando...' : fotoPreview ? 'Cambiar imagen' : 'Subir imagen'}
                 </span>

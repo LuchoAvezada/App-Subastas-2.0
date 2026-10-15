@@ -65,6 +65,14 @@
 - Base 16px, line-height 1.5. **Mínimo de texto legible: 12px** (`text-xs`). Los micro-labels `text-[10px]` se elevan a `text-[11px]` y se reservan solo para etiquetas en mayúsculas.
 - Jerarquía: `text-2xl/3xl` black (h1) · `text-lg/xl` bold (h2/h3) · `text-sm` cuerpo · `text-xs` meta.
 
+### Iconografía
+- Librería única: **Phosphor** (`@phosphor-icons/react`), nombres con sufijo `Icon` (`GavelIcon`, `UsersIcon`).
+- Peso global **Bold** vía `IconContext` en `src/main.tsx`; no pasar `weight` por ícono salvo la excepción ilustrativa.
+- Funcionales (navegación, botones, inline con texto): `w-3.5` · `w-4` · **`w-[18px]` (estándar)** · `w-[22px]`, con su `h-*` igual.
+- Tiles y KPIs (`w-6`/`w-7`): Bold global, sin `weight`.
+- Ilustrativos (estados vacíos, placeholders de imagen, confirmación de registro): `weight="light"`.
+- Color siempre con `text-*` (heredan `currentColor`).
+
 ---
 
 ## Reglas de componente
@@ -84,14 +92,15 @@
 - No animar `width`/`height`/`top/left` (usar `transform`/`opacity`).
 
 ## Anti-patterns (NO usar)
-- ❌ Emojis como iconos → usar SVG (Lucide, ya instalado).
+- ❌ Emojis como iconos → usar SVG (Phosphor, ver Iconografía).
+- ❌ Mezclar librerías de íconos o pesos ad hoc.
 - ❌ Texto con contraste < 4.5:1 (gray-400 sobre blanco).
 - ❌ Cambios de estado instantáneos (0ms) o sin foco visible.
 - ❌ Zoo de radios/sombras/colores para el mismo problema.
 - ❌ Exceso de gradientes/glassmorphism; hover que desplaza el layout.
 
 ## Pre-Delivery Checklist (UI/UX Pro Max)
-- [ ] Sin emojis como iconos (SVG/Lucide)
+- [ ] Sin emojis como iconos (SVG/Phosphor Bold)
 - [ ] `cursor-pointer` en todo lo clickeable
 - [ ] Hover con transición 150–300ms
 - [ ] Contraste de texto ≥ 4.5:1

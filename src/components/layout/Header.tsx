@@ -1,4 +1,4 @@
-import { Menu } from 'lucide-react';
+import { ListIcon } from '@phosphor-icons/react';
 import { useAuth } from '../../hooks/useAuth';
 
 interface HeaderProps {
@@ -17,7 +17,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
           className="p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 lg:hidden focus:outline-none focus:ring-2 focus:ring-agrotec-500"
           aria-label="Abrir menú"
         >
-          <Menu className="w-5 h-5" />
+          <ListIcon className="w-[22px] h-[22px]" />
         </button>
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-agrotec-800">

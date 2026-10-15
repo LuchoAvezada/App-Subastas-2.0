@@ -7,15 +7,15 @@ import { useToast } from '../ui/Toast';
 import { useCountdown } from '../../hooks/useCountdown';
 import { formatFechaAsuncion } from '../../lib/utils';
 import {
-  Calendar,
-  Clock,
-  Save,
-  Lock,
-  Unlock,
-  AlertTriangle,
-  CheckCircle2,
-  Play,
-} from 'lucide-react';
+  CalendarBlankIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  FloppyDiskIcon,
+  LockIcon,
+  LockOpenIcon,
+  PlayIcon,
+  WarningIcon,
+} from '@phosphor-icons/react';
 
 export function ConfigSubasta() {
   const countdown = useCountdown();
@@ -142,7 +142,7 @@ export function ConfigSubasta() {
                 variant="danger"
                 size="md"
                 className="bg-[#8A2733] hover:bg-[#6e1e28] text-white border-transparent shadow-sm"
-                leftIcon={<Lock className="w-4 h-4" />}
+                leftIcon={<LockIcon className="w-[18px] h-[18px]" />}
                 onClick={() => setModalCerrarOpen(true)}
               >
                 Cerrar Recepción de Ofertas Ahora
@@ -151,7 +151,7 @@ export function ConfigSubasta() {
               <Button
                 variant="primary"
                 size="md"
-                leftIcon={<Unlock className="w-4 h-4" />}
+                leftIcon={<LockOpenIcon className="w-[18px] h-[18px]" />}
                 onClick={() => setModalAbrirOpen(true)}
               >
                 Abrir / Reanudar Recepción
@@ -195,7 +195,7 @@ export function ConfigSubasta() {
       <div className="bg-white rounded-3xl border border-gray-200/90 p-6 sm:p-8 shadow-sm space-y-5">
         <div>
           <h3 className="text-lg font-black text-gray-900 tracking-tight flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-[#1C5A34]" />
+            <CalendarBlankIcon className="w-[22px] h-[22px] text-[#1C5A34]" />
             <span>Programar Fecha y Hora Exacta de Cierre</span>
           </h3>
           <p className="text-xs text-gray-500 mt-1">
@@ -210,7 +210,7 @@ export function ConfigSubasta() {
             required
             value={fechaFinInput}
             onChange={(e) => setFechaFinInput(e.target.value)}
-            leftIcon={<Clock className="w-4 h-4" />}
+            leftIcon={<ClockIcon className="w-[18px] h-[18px]" />}
             helperText="Hora local de Asunción (GMT-3)"
           />
 
@@ -219,7 +219,7 @@ export function ConfigSubasta() {
               type="submit"
               variant="primary"
               isLoading={saving}
-              leftIcon={<Save className="w-4 h-4" />}
+              leftIcon={<FloppyDiskIcon className="w-[18px] h-[18px]" />}
             >
               Guardar Nueva Fecha
             </Button>
@@ -234,7 +234,7 @@ export function ConfigSubasta() {
           onClose={() => !procesandoAccion && setModalCerrarOpen(false)}
           title={
             <span className="flex items-center gap-2 text-[#8A2733]">
-              <AlertTriangle className="w-5 h-5 text-[#8A2733]" />
+              <WarningIcon className="w-[22px] h-[22px] text-[#8A2733]" />
               <span>Cerrar Recepción de Ofertas Inmediatamente</span>
             </span>
           }
@@ -265,7 +265,7 @@ export function ConfigSubasta() {
                 variant="danger"
                 className="bg-[#8A2733] hover:bg-[#6e1e28] text-white"
                 isLoading={procesandoAccion}
-                leftIcon={<Lock className="w-4 h-4" />}
+                leftIcon={<LockIcon className="w-[18px] h-[18px]" />}
                 onClick={handleCerrarInmediato}
               >
                 Confirmar Cierre Ahora
@@ -282,7 +282,7 @@ export function ConfigSubasta() {
           onClose={() => !procesandoAccion && setModalAbrirOpen(false)}
           title={
             <span className="flex items-center gap-2 text-[#1C5A34]">
-              <Unlock className="w-5 h-5 text-[#1C5A34]" />
+              <LockOpenIcon className="w-[22px] h-[22px] text-[#1C5A34]" />
               <span>Abrir / Reanudar Recepción de Ofertas</span>
             </span>
           }
@@ -292,7 +292,7 @@ export function ConfigSubasta() {
           <div className="space-y-4">
             <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-xs">
               <p className="font-semibold flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-[#1C5A34]" />
+                <CheckCircleIcon className="w-[18px] h-[18px] text-[#1C5A34]" />
                 Se habilitará inmediatamente el botón de pujas en el catálogo.
               </p>
               <p className="text-[11px] text-emerald-800 mt-1">
@@ -335,7 +335,7 @@ export function ConfigSubasta() {
               <Button
                 variant="primary"
                 isLoading={procesandoAccion}
-                leftIcon={<Play className="w-4 h-4" />}
+                leftIcon={<PlayIcon className="w-[18px] h-[18px]" />}
                 onClick={() => handleAbrirConPlazo(opcionHoras)}
               >
                 Habilitar Ofertas ({opcionHoras >= 24 ? `${opcionHoras / 24}d` : `${opcionHoras}h`})

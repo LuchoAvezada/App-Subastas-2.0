@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
-import { X } from 'lucide-react';
+import { XIcon } from '@phosphor-icons/react';
 import { cn } from '../../lib/utils';
 
 export interface ModalProps {
@@ -137,7 +137,7 @@ export function Modal({
                 aria-label="Cerrar"
                 className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-agrotec-500"
               >
-                <X className="h-5 w-5" aria-hidden="true" />
+                <XIcon className="h-[22px] w-[22px]" aria-hidden="true" />
               </button>
             </div>
           )}

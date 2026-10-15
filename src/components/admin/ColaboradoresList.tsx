@@ -5,7 +5,7 @@ import { Input } from '../ui/Input';
 import { Spinner } from '../ui/Spinner';
 import { useToast } from '../ui/Toast';
 import { Modal } from '../ui/Modal';
-import { Search, Upload, RefreshCw, Check, Users, AlertCircle, UserPlus, Pencil } from 'lucide-react';
+import { ArrowsClockwiseIcon, CheckIcon, MagnifyingGlassIcon, PencilSimpleIcon, UploadSimpleIcon, UserPlusIcon, UsersIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import { ColaboradorForm } from './ColaboradorForm';
 import type { DatosColaborador } from '../../types/domain';
 import Papa from 'papaparse';
@@ -138,7 +138,7 @@ export function ColaboradoresList() {
             placeholder="Buscar por nombre o CI..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            leftIcon={<Search className="w-4 h-4" />}
+            leftIcon={<MagnifyingGlassIcon className="w-[18px] h-[18px]" />}
           />
         </div>
 
@@ -147,7 +147,7 @@ export function ColaboradoresList() {
             variant="outline"
             size="sm"
             onClick={fetchColaboradores}
-            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            leftIcon={<ArrowsClockwiseIcon className="w-4 h-4" />}
           >
             Actualizar
           </Button>
@@ -156,7 +156,7 @@ export function ColaboradoresList() {
             variant="secondary"
             size="sm"
             onClick={() => setIsCsvModalOpen(true)}
-            leftIcon={<Upload className="w-3.5 h-3.5" />}
+            leftIcon={<UploadSimpleIcon className="w-4 h-4" />}
           >
             Importar CSV
           </Button>
@@ -168,7 +168,7 @@ export function ColaboradoresList() {
               setEditando(null);
               setIsFormOpen(true);
             }}
-            leftIcon={<UserPlus className="w-3.5 h-3.5" />}
+            leftIcon={<UserPlusIcon className="w-4 h-4" />}
           >
             Nuevo Colaborador
           </Button>
@@ -178,7 +178,7 @@ export function ColaboradoresList() {
       {/* Table */}
       {loadError && (
         <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2">
-          <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+          <WarningCircleIcon className="w-[18px] h-[18px] text-red-500 shrink-0 mt-0.5" />
           <span>No se pudo cargar la nómina: {loadError}</span>
         </div>
       )}
@@ -189,7 +189,7 @@ export function ColaboradoresList() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200/80 p-12 text-center">
-          <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <UsersIcon weight="light" className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <h3 className="text-base font-semibold text-gray-800">No se encontraron colaboradores</h3>
           <p className="text-xs text-gray-500 mt-1">Pruebe ajustando el término de búsqueda o importe la nómina vía CSV.</p>
         </div>
@@ -228,7 +228,7 @@ export function ColaboradoresList() {
                     <td className="py-3.5 px-4">
                       {c.usuario_registrado === 'REGISTRADO' ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                          <Check className="w-3 h-3" /> Registrado
+                          <CheckIcon className="w-3.5 h-3.5" /> Registrado
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200">
@@ -264,7 +264,7 @@ export function ColaboradoresList() {
                         title="Editar colaborador"
                         className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:text-agrotec-800 hover:bg-agrotec-50 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-agrotec-500"
                       >
-                        <Pencil className="w-4 h-4" aria-hidden="true" />
+                        <PencilSimpleIcon className="w-[18px] h-[18px]" aria-hidden="true" />
                       </button>
                     </td>
                   </tr>
@@ -286,7 +286,7 @@ export function ColaboradoresList() {
         <div className="space-y-4">
           {csvError && (
             <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+              <WarningCircleIcon className="w-[18px] h-[18px] text-red-500 shrink-0 mt-0.5" />
               <span>{csvError}</span>
             </div>
           )}

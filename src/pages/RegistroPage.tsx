@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { validatePassword } from '../lib/utils';
-import { Lock, User, AlertCircle, ArrowLeft, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { ArrowLeftIcon, CheckCircleIcon, LockIcon, ShieldCheckIcon, UserIcon, WarningCircleIcon } from '@phosphor-icons/react';
 
 export function RegistroPage() {
   const [ci, setCi] = useState('');
@@ -80,7 +80,7 @@ export function RegistroPage() {
           {success ? (
             <div className="text-center py-6 space-y-4">
               <div className="w-16 h-16 bg-[#E8F0EB] text-[#1C5A34] rounded-full flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-10 h-10" />
+                <CheckCircleIcon weight="light" className="w-10 h-10" />
               </div>
               <h3 className="text-xl font-bold text-[#1C5A34]">
                 ¡Cuenta registrada con éxito!
@@ -98,7 +98,7 @@ export function RegistroPage() {
             <form className="space-y-4" onSubmit={handleSubmit}>
               {error && (
                 <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <WarningCircleIcon className="w-[22px] h-[22px] text-red-500 shrink-0 mt-0.5" />
                   <div className="leading-relaxed font-medium">{error}</div>
                 </div>
               )}
@@ -113,7 +113,7 @@ export function RegistroPage() {
                 helperText="Debe coincidir con su documento registrado en RRHH"
                 value={ci}
                 onChange={(e) => setCi(e.target.value)}
-                leftIcon={<User className="w-4 h-4" />}
+                leftIcon={<UserIcon className="w-[18px] h-[18px]" />}
               />
 
               <Input
@@ -126,7 +126,7 @@ export function RegistroPage() {
                 helperText="Debe incluir mayúscula, minúscula y número"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                leftIcon={<Lock className="w-4 h-4" />}
+                leftIcon={<LockIcon className="w-[18px] h-[18px]" />}
               />
 
               <Input
@@ -138,7 +138,7 @@ export function RegistroPage() {
                 placeholder="Repita su contraseña"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                leftIcon={<Lock className="w-4 h-4" />}
+                leftIcon={<LockIcon className="w-[18px] h-[18px]" />}
               />
 
               <Button
@@ -157,7 +157,7 @@ export function RegistroPage() {
               to="/login"
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1C5A34] hover:text-[#154728] transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
+              <ArrowLeftIcon className="w-4 h-4" />
               <span>Volver a Iniciar Sesión</span>
             </Link>
           </div>
@@ -165,7 +165,7 @@ export function RegistroPage() {
 
         {/* Security / Help Note */}
         <div className="mt-6 text-center text-xs text-[#6D6D6D] max-w-sm mx-auto flex items-center justify-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-[#1C5A34] shrink-0" />
+          <ShieldCheckIcon className="w-[18px] h-[18px] text-[#1C5A34] shrink-0" />
           <span>Acceso exclusivo para colaboradores habilitados.</span>
         </div>
       </div>

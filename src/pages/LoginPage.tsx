@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { Lock, User, AlertCircle, ArrowRight, CheckCircle2, Zap, UserRound } from 'lucide-react';
+import { ArrowRightIcon, CheckCircleIcon, LightningIcon, LockIcon, UserCircleIcon, UserIcon, WarningCircleIcon } from '@phosphor-icons/react';
 
 export function LoginPage() {
   const [ci, setCi] = useState('');
@@ -70,7 +70,7 @@ export function LoginPage() {
           <form className="space-y-5" onSubmit={handleSubmit}>
             {error && (
               <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-3 animate-fade-in">
-                <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                <WarningCircleIcon className="w-[22px] h-[22px] text-red-500 shrink-0 mt-0.5" />
                 <div className="leading-relaxed font-medium">{error}</div>
               </div>
             )}
@@ -84,7 +84,7 @@ export function LoginPage() {
               placeholder="Ej: 1234567"
               value={ci}
               onChange={(e) => setCi(e.target.value)}
-              leftIcon={<User className="w-4 h-4" />}
+              leftIcon={<UserIcon className="w-[18px] h-[18px]" />}
             />
 
             <Input
@@ -96,7 +96,7 @@ export function LoginPage() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              leftIcon={<Lock className="w-4 h-4" />}
+              leftIcon={<LockIcon className="w-[18px] h-[18px]" />}
             />
 
             <Button
@@ -104,7 +104,7 @@ export function LoginPage() {
               className="w-full shadow-none"
               size="lg"
               isLoading={loading}
-              rightIcon={<ArrowRight className="w-4 h-4" />}
+              rightIcon={<ArrowRightIcon className="w-[18px] h-[18px]" />}
             >
               Iniciar Sesión
             </Button>
@@ -146,7 +146,7 @@ export function LoginPage() {
                     }}
                     className="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 text-xs font-semibold text-agrotec-800 bg-agrotec-50 hover:bg-agrotec-100 rounded-lg border border-agrotec-200 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-agrotec-500"
                   >
-                    <Zap className="w-3.5 h-3.5" aria-hidden="true" />
+                    <LightningIcon className="w-4 h-4" aria-hidden="true" />
                     Admin Demo
                   </button>
                   <button
@@ -165,7 +165,7 @@ export function LoginPage() {
                     }}
                     className="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 text-xs font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-agrotec-500"
                   >
-                    <UserRound className="w-3.5 h-3.5" aria-hidden="true" />
+                    <UserCircleIcon className="w-4 h-4" aria-hidden="true" />
                     Usuario Demo
                   </button>
                 </div>
@@ -176,7 +176,7 @@ export function LoginPage() {
 
         {/* Security / Help Note */}
         <div className="mt-6 text-center text-xs text-[#6D6D6D] max-w-sm mx-auto flex items-center justify-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-[#1C5A34] shrink-0" />
+          <CheckCircleIcon className="w-[18px] h-[18px] text-[#1C5A34] shrink-0" />
           <span>Acceso exclusivo para colaboradores habilitados.</span>
         </div>
       </div>

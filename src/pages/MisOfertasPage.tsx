@@ -10,13 +10,13 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Spinner } from '../components/ui/Spinner';
 import { useToast } from '../components/ui/Toast';
 import {
-  History,
-  RefreshCw,
-  ArrowRight,
-  Ban,
-  AlertTriangle,
-  CheckCircle2,
-} from 'lucide-react';
+  ArrowRightIcon,
+  ArrowsClockwiseIcon,
+  CheckCircleIcon,
+  ClockCounterClockwiseIcon,
+  ProhibitIcon,
+  WarningIcon,
+} from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
 import type { OfertaRecibida } from '../types/domain';
 
@@ -131,7 +131,7 @@ export function MisOfertasPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200/80">
         <div>
           <div className="flex items-center gap-2 text-agrotec-700 text-xs font-bold uppercase tracking-wider mb-1">
-            <History className="w-3.5 h-3.5" />
+            <ClockCounterClockwiseIcon className="w-4 h-4" />
             <span>Registro Personal</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
@@ -147,7 +147,7 @@ export function MisOfertasPage() {
             variant="outline"
             size="sm"
             onClick={() => refetch()}
-            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            leftIcon={<ArrowsClockwiseIcon className="w-4 h-4" />}
           >
             Actualizar
           </Button>
@@ -183,12 +183,12 @@ export function MisOfertasPage() {
         </div>
       ) : todasLasOfertas.length === 0 ? (
         <EmptyState
-          icon={<History className="w-12 h-12 text-gray-300 stroke-1" />}
+          icon={<ClockCounterClockwiseIcon weight="light" className="w-12 h-12 text-gray-300" />}
           title="Aún no ha realizado ofertas"
           description="Explore las diferentes categorías del catálogo de activos e ingrese sus ofertas antes del cierre oficial."
           action={
             <Link to="/catalogo/tablets">
-              <Button leftIcon={<ArrowRight className="w-4 h-4" />}>
+              <Button leftIcon={<ArrowRightIcon className="w-[18px] h-[18px]" />}>
                 Explorar Catálogos
               </Button>
             </Link>
@@ -268,12 +268,12 @@ export function MisOfertasPage() {
                       <td className="py-3.5 px-4 text-center">
                         {isCancelada ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#F9D7E0] text-[#8A2733] border border-rose-200">
-                            <Ban className="w-3 h-3" />
+                            <ProhibitIcon className="w-3.5 h-3.5" />
                             Cancelada
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#E8F0EB] text-[#1C5A34] border border-emerald-200">
-                            <CheckCircle2 className="w-3 h-3" />
+                            <CheckCircleIcon className="w-3.5 h-3.5" />
                             Activa
                           </span>
                         )}
@@ -290,7 +290,7 @@ export function MisOfertasPage() {
                             disabled={isSubastaCerrada}
                             onClick={() => o.original && setOfertaACancelar(o.original)}
                             className="text-[#8A2733] border-[#8A2733]/30 hover:bg-[#F9D7E0]/50 hover:border-[#8A2733] text-xs font-bold"
-                            leftIcon={<Ban className="w-3.5 h-3.5 text-[#8A2733]" />}
+                            leftIcon={<ProhibitIcon className="w-4 h-4 text-[#8A2733]" />}
                           >
                             {isSubastaCerrada ? 'Finalizada' : 'Cancelar'}
                           </Button>
@@ -312,7 +312,7 @@ export function MisOfertasPage() {
           onClose={() => !cancelando && setOfertaACancelar(null)}
           title={
             <span className="flex items-center gap-2 text-[#8A2733]">
-              <AlertTriangle className="w-5 h-5 text-[#8A2733]" />
+              <WarningIcon className="w-[22px] h-[22px] text-[#8A2733]" />
               <span>¿Cancelar oferta por {ofertaACancelar.marca} {ofertaACancelar.modelo}?</span>
             </span>
           }
@@ -365,7 +365,7 @@ export function MisOfertasPage() {
                 variant="danger"
                 className="bg-[#8A2733] hover:bg-[#6e1e28] text-white"
                 isLoading={cancelando}
-                leftIcon={<Ban className="w-4 h-4" />}
+                leftIcon={<ProhibitIcon className="w-[18px] h-[18px]" />}
                 onClick={handleConfirmarCancelacion}
               >
                 Confirmar y Cancelar Oferta
