@@ -937,6 +937,23 @@ CREATE POLICY "activos_update"
     USING (bucket_id = 'activos');
 
 -- ═══════════════════════════════════════════════════════════
+-- 12. REALTIME — el temporizador de cierre se sincroniza en
+--     todos los clientes (CountdownContext escucha sub_app_config)
+-- ═══════════════════════════════════════════════════════════
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+          AND schemaname = 'public'
+          AND tablename = 'sub_app_config'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE sub_app_config;
+    END IF;
+END $$;
+
+-- ═══════════════════════════════════════════════════════════
 -- FIN. Próximos pasos (fuera de este script):
 --  1) Cargar colaboradores reales (o importar CSV desde el panel admin).
 --  2) Marcar al administrador:  UPDATE sub_colaboradores SET id_rol = 1

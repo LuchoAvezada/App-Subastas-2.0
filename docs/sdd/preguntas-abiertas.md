@@ -19,6 +19,7 @@ Este documento registra las decisiones de negocio y alcance aprobadas por el res
 | **Q-04** | Almacenamiento y carga de fotos de activos | F03 (Activos) | Supabase Storage (Bucket `activos-subasta`) | `✅ Resuelta` |
 | **Q-05** | Protocolo ante desistimiento de un ganador | F07 (Resultados) | Reasignación automática en el sistema al siguiente postor | `✅ Resuelta` |
 | **Q-06** | Recursos de marca (Gabarito y logo Agrotec) | F01 (Marca y Base) | Descarga oficial de Gabarito (SIL OFL) y logo en `public/brand/` | `✅ Resuelta` |
+| **Q-07** | ¿La importación CSV debe dar de baja a quienes no figuran en el archivo? | F08 (Colaboradores) | — (hoy no se dan de baja) | `pendiente` |
 
 ---
 
@@ -92,3 +93,17 @@ Este documento registra las decisiones de negocio y alcance aprobadas por el res
   - Integrar el logo corporativo en `public/brand/logo-agrotec.svg` y adaptar favicon con las hojas del logo.
 - **Impacto técnico:** F01 (Base del Proyecto y Marca Agrotec).
 - **Estado:** `✅ Resuelta`
+
+---
+
+### Q-07: Bajas de colaboradores ausentes en la nómina importada
+- **Contexto:** La importación CSV de F08 agrega y actualiza colaboradores, pero no hace nada con los que están en la app y no figuran en el archivo (por ejemplo, quienes dejaron la empresa). Hoy siguen habilitados hasta que el administrador los deshabilite a mano.
+- **Opciones:**
+  1. **(Recomendada)** Dejarlo como está y mostrar en el reporte cuántos colaboradores habilitados no figuran en el archivo, para que el administrador decida.
+  2. Deshabilitarlos automáticamente (`habilitado = 'NO'`) al confirmar la importación.
+  3. Preguntar en cada importación si se deshabilitan.
+- **Impacto técnico:**
+  - Opción 1: un conteo más en el reporte.
+  - Opciones 2 y 3: una segunda escritura y cuidar no deshabilitar administradores.
+- **Para qué feature:** F08 (Carga Masiva de Colaboradores).
+- **Estado:** `pendiente`

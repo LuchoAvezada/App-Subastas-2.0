@@ -16,7 +16,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 | **F05** | Mis Ofertas y Cancelación de Oferta con Veto | F04 | Ninguna | Medio | Alto | Bajo | `✅ Completada` |
 | **F06** | Procesamiento de Ganadores, Tope por Categoría y Desempate | F04 | Ninguna | Alto | Crítico | Alto | `✅ Completada` |
 | **F07** | Publicación de Resultados y Reasignación por Desistimiento | F06 | Ninguna | Medio | Alto | Medio | `✅ Completada` |
-| **F08** | Carga Masiva de Colaboradores y Configuración de Subasta | F02 | Ninguna | Bajo | Alto | Medio | `En espera` |
+| **F08** | Carga Masiva de Colaboradores y Configuración de Subasta | F02 | Ninguna | Bajo | Alto | Medio | `✅ Completada` |
 
 ---
 
@@ -113,11 +113,25 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 
 ---
 
-### F08: Carga Masiva de Colaboradores y Configuración de Subasta
-- **Objetivo:** Permitir al administrador importar la nómina de colaboradores desde archivos CSV con validación de formato, y definir la fecha/hora de cierre de la subasta configurada en zona horaria `America/Asuncion`.
-- **Q-xx asociadas:** Ninguna.
+### F08: Carga Masiva de Colaboradores y Configuración de Subasta (✅ Completada)
+- **Objetivo:** Permitir al administrador importar la nómina de colaboradores desde archivos CSV con validación de formato, y definir la fecha/hora de cierre de la subasta configurada en zona horaria `America/Asuncion`. Incluye además una vista de colaboradores con resumen, filtros y orden (pedido del 2026-10-16).
+- **Q-xx asociadas:** Q-07 (`pendiente`, fuera de alcance: bajas de colaboradores ausentes en el CSV).
 - **Riesgo:** Bajo. | **Valor:** Alto. | **Esfuerzo:** Medio.
-- **Criterios de Aceptación Iniciales:**
-  - Carga masiva de colaboradores con reporte de registros insertados y errores de formato.
-  - Selector de fecha y hora límite de subasta en zona horaria `America/Asuncion`.
-  - Sincronización del temporizador de cierre en todos los clientes.
+- **Especificación:** `specs/008-carga-colaboradores-config/`.
+- **Criterios de Aceptación Cumplidos:**
+  - **Revisión del CSV antes de escribir:**
+    - El reporte separa nuevos, con cambios, sin cambios y filas con error (número de fila de la planilla, cédula y motivo).
+    - Se importan solo las filas válidas, al confirmar, en un único upsert.
+  - **Validaciones del CSV:**
+    - Las columnas obligatorias se validan antes de leer las filas.
+    - No se inventan `fecha_ingreso` ni `id_cargo`, que definen el desempate (P9).
+    - Re-importar conserva el rol y la habilitación de los existentes cuando el CSV no los trae.
+    - El rol Administrador nunca se asigna ni se quita por CSV.
+  - **Fecha de cierre:** el selector interpreta la hora como oficial de Asunción, sin importar la zona del equipo, y la guarda en UTC.
+  - **Sincronización:** el temporizador se sincroniza en todos los clientes vía Realtime (`sql/13_sincronizacion_config.sql`) con sondeo de respaldo de 30 s.
+  - **Vista de colaboradores:**
+    - Resumen: total, habilitados, con cuenta y habilitados sin registrarse.
+    - Filtros combinables por estado, cuenta, rol y cargo, con conteos.
+    - Búsqueda sin acentos.
+    - Orden por columna con `aria-sort`.
+    - Antigüedad en años.

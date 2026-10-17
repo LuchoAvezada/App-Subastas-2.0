@@ -10,6 +10,8 @@ Esta guía documenta los pasos para levantar el entorno de desarrollo, ejecutar 
 - **Gestor de paquetes**: npm (v10+).
 - **Git**: Configurado localmente.
 - **Base de Datos / Backend**: Instancia de Supabase con los esquemas y funciones de `sql/` ejecutados (`00_instalacion_completa.sql` o migraciones secuenciales).
+  - Si la base ya estaba instalada, ejecuta en el editor SQL de Supabase las migraciones nuevas en orden.
+  - `13_sincronizacion_config.sql` (F08) activa Realtime en `sub_app_config`, para que el temporizador de cierre se actualice al instante en todos los clientes. Es idempotente.
 
 > [!NOTE]
 > En entornos Windows PowerShell, si la política de scripts bloquea `npm.ps1`, utiliza el comando `npm.cmd` (ejemplo: `npm.cmd run dev`).

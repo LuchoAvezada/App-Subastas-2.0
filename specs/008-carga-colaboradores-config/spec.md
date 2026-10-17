@@ -2,7 +2,7 @@
 
 **Feature ID**: F08  
 **Fecha**: 2026-10-16  
-**Estado**: Ready  
+**Estado**: Completed  
 
 ---
 
@@ -75,13 +75,13 @@ Además, el responsable del proyecto pidió el 2026-10-16 **filtrar, ordenar y r
 
 ## 4. Criterios de Aceptación (Definition of Done)
 
-- [ ] El CSV con columnas faltantes se rechaza indicando cuáles faltan.
-- [ ] Cada fila inválida aparece en el reporte con su número de fila y su motivo, y no se importa.
-- [ ] No se inventan `fecha_ingreso` ni `id_cargo`.
-- [ ] Re-importar no cambia el rol ni la habilitación de los existentes si el CSV no los trae, y nunca asigna ni quita el rol Administrador.
-- [ ] El reporte distingue nuevos, a actualizar, sin cambios y errores. Tras importar se informa lo insertado y lo actualizado.
-- [ ] La fecha de cierre elegida se guarda como la hora de Asunción convertida a UTC, aunque el navegador esté en otra zona.
-- [ ] `sub_app_config` queda en la publicación Realtime mediante un script idempotente.
-- [ ] La vista de colaboradores tiene resumen, filtros combinables con conteos, búsqueda sin acentos y orden por columna.
-- [ ] Pruebas unitarias de validación, conversión horaria, filtrado y orden pasando. Lint y build sin errores.
-- [ ] Verificación en el navegador integrado en escritorio y en móvil.
+- [x] El CSV con columnas faltantes se rechaza indicando cuáles faltan.
+- [x] Cada fila inválida aparece en el reporte con su número de fila y su motivo, y no se importa.
+- [x] No se inventan `fecha_ingreso` ni `id_cargo`.
+- [x] Re-importar no cambia el rol ni la habilitación de los existentes si el CSV no los trae, y nunca asigna ni quita el rol Administrador.
+- [x] El reporte distingue nuevos, a actualizar, sin cambios y errores. Tras importar se informa lo insertado y lo actualizado.
+- [x] La fecha de cierre elegida se guarda como la hora de Asunción convertida a UTC, aunque el navegador esté en otra zona.
+- [x] `sub_app_config` queda en la publicación Realtime mediante un script idempotente.
+- [x] La vista de colaboradores tiene resumen, filtros combinables con conteos, búsqueda sin acentos y orden por columna.
+- [x] Pruebas unitarias de validación, conversión horaria, filtrado y orden pasando. Lint y build sin errores.
+- [x] Verificación en el navegador integrado en escritorio y en móvil.

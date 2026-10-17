@@ -1,4 +1,4 @@
-import { formatInTimeZone } from 'date-fns-tz';
+import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 import { formatDistanceToNowStrict, isPast, differenceInSeconds } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -22,6 +22,14 @@ export function parseUtcDate(fecha: string | Date): Date {
  */
 export function formatFechaAsuncion(fecha: string | Date, formato = 'dd/MM/yyyy HH:mm:ss'): string {
   return formatInTimeZone(parseUtcDate(fecha), TIMEZONE, formato);
+}
+
+/**
+ * Interpreta "AAAA-MM-DDTHH:mm" (valor de un input datetime-local) como hora oficial
+ * de Asunción y la devuelve en ISO UTC, sin importar la zona horaria del navegador.
+ */
+export function asuncionAUtcIso(fechaHora: string): string {
+  return fromZonedTime(fechaHora, TIMEZONE).toISOString();
 }
 
 /**

@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -6,7 +6,7 @@ import { Modal } from '../ui/Modal';
 import { useToast } from '../ui/Toast';
 import { useCountdown } from '../../hooks/useCountdown';
 import { useAuth } from '../../hooks/useAuth';
-import { formatFechaAsuncion, parseUtcDate } from '../../lib/utils';
+import { asuncionAUtcIso, formatFechaAsuncion } from '../../lib/utils';
 import {
   CalendarBlankIcon,
   CheckCircleIcon,
@@ -24,7 +24,11 @@ import {
 export function ConfigSubasta() {
   const countdown = useCountdown();
   const { usuario, logout } = useAuth();
-  const [fechaFinInput, setFechaFinInput] = useState('');
+  // null = sin editar: el selector muestra la fecha vigente en hora de Asunción
+  const [fechaFinEditada, setFechaFinEditada] = useState<string | null>(null);
+  const fechaFinInput =
+    fechaFinEditada ??
+    (countdown.fechaFin ? formatFechaAsuncion(countdown.fechaFin, "yyyy-MM-dd'T'HH:mm") : '');
   const [saving, setSaving] = useState(false);
   const [modalCerrarOpen, setModalCerrarOpen] = useState(false);
   const [modalAbrirOpen, setModalAbrirOpen] = useState(false);
@@ -32,19 +36,6 @@ export function ConfigSubasta() {
   const [opcionHoras, setOpcionHoras] = useState<number>(24);
   const [procesandoAccion, setProcesandoAccion] = useState(false);
   const toast = useToast();
-
-  useEffect(() => {
-    if (countdown.fechaFin) {
-      // Formato para input datetime-local basado en el instante UTC interpretado correctamente
-      const d = parseUtcDate(countdown.fechaFin);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      const hours = String(d.getHours()).padStart(2, '0');
-      const minutes = String(d.getMinutes()).padStart(2, '0');
-      setFechaFinInput(`${year}-${month}-${day}T${hours}:${minutes}`);
-    }
-  }, [countdown.fechaFin]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -55,7 +46,7 @@ export function ConfigSubasta() {
 
     setSaving(true);
     try {
-      const isoDate = new Date(fechaFinInput).toISOString();
+      const isoDate = asuncionAUtcIso(fechaFinInput);
 
       const { error } = await supabase
         .from('sub_app_config')
@@ -66,6 +57,7 @@ export function ConfigSubasta() {
 
       toast.success('Fecha de cierre de subasta actualizada.');
       await countdown.refreshConfig();
+      setFechaFinEditada(null);
     } catch (err) {
       console.error('Error guardando configuración:', err);
       toast.error('No se pudo guardar la configuración.');
@@ -91,6 +83,7 @@ export function ConfigSubasta() {
       toast.success('La recepción de ofertas ha sido cerrada con éxito.');
       setModalCerrarOpen(false);
       await countdown.refreshConfig();
+      setFechaFinEditada(null);
     } catch (err) {
       console.error('Error cerrando subasta:', err);
       toast.error('No fue posible cerrar la recepción de ofertas.');
@@ -115,6 +108,7 @@ export function ConfigSubasta() {
       toast.success(`Recepción de ofertas abierta por ${horas >= 24 ? `${horas / 24} día(s)` : `${horas} hora(s)`}.`);
       setModalAbrirOpen(false);
       await countdown.refreshConfig();
+      setFechaFinEditada(null);
     } catch (err) {
       console.error('Error abriendo subasta:', err);
       toast.error('No fue posible abrir la recepción de ofertas.');
@@ -239,9 +233,9 @@ export function ConfigSubasta() {
             type="datetime-local"
             required
             value={fechaFinInput}
-            onChange={(e) => setFechaFinInput(e.target.value)}
+            onChange={(e) => setFechaFinEditada(e.target.value)}
             leftIcon={<ClockIcon className="w-[18px] h-[18px]" />}
-            helperText="Hora local de Asunción (GMT-3)"
+            helperText="Hora oficial de Asunción, sin importar la zona horaria de este equipo"
           />
 
           <div className="pt-2 flex items-center gap-3">
