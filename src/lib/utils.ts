@@ -5,31 +5,44 @@ import { es } from 'date-fns/locale';
 const TIMEZONE = 'America/Asuncion';
 
 /**
+ * Parsea cualquier timestamp de base de datos garantizando su interpretación en UTC
+ * si el string carece de indicador de zona horaria (evita desfases por timezone local).
+ */
+export function parseUtcDate(fecha: string | Date): Date {
+  if (fecha instanceof Date) return fecha;
+  if (!fecha) return new Date();
+  if (typeof fecha === 'string' && !fecha.endsWith('Z') && !/[+-]\d{2}(:\d{2})?$/.test(fecha)) {
+    return new Date(`${fecha}Z`);
+  }
+  return new Date(fecha);
+}
+
+/**
  * Format a timestamp to Asunción timezone display string
  */
 export function formatFechaAsuncion(fecha: string | Date, formato = 'dd/MM/yyyy HH:mm:ss'): string {
-  return formatInTimeZone(new Date(fecha), TIMEZONE, formato);
+  return formatInTimeZone(parseUtcDate(fecha), TIMEZONE, formato);
 }
 
 /**
  * Format a timestamp as a relative "time ago" string
  */
 export function formatTimeAgo(fecha: string | Date): string {
-  return formatDistanceToNowStrict(new Date(fecha), { locale: es, addSuffix: true });
+  return formatDistanceToNowStrict(parseUtcDate(fecha), { locale: es, addSuffix: true });
 }
 
 /**
  * Check if a date is in the past
  */
 export function hasPassed(fecha: string | Date): boolean {
-  return isPast(new Date(fecha));
+  return isPast(parseUtcDate(fecha));
 }
 
 /**
  * Get seconds remaining until a target date
  */
 export function getSecondsRemaining(targetDate: string | Date): number {
-  const diff = differenceInSeconds(new Date(targetDate), new Date());
+  const diff = differenceInSeconds(parseUtcDate(targetDate), new Date());
   return Math.max(0, diff);
 }
 

@@ -15,7 +15,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 | **F04** | Catálogo de Activos, Visibilidad de Ofertas y Pujas | F01, F02, F03 | Ninguna | Alto | Crítico | Medio | `✅ Completada` |
 | **F05** | Mis Ofertas y Cancelación de Oferta con Veto | F04 | Ninguna | Medio | Alto | Bajo | `✅ Completada` |
 | **F06** | Procesamiento de Ganadores, Tope por Categoría y Desempate | F04 | Ninguna | Alto | Crítico | Alto | `✅ Completada` |
-| **F07** | Publicación de Resultados y Reasignación por Desistimiento | F06 | Ninguna | Medio | Alto | Medio | `En espera` |
+| **F07** | Publicación de Resultados y Reasignación por Desistimiento | F06 | Ninguna | Medio | Alto | Medio | `✅ Completada` |
 | **F08** | Carga Masiva de Colaboradores y Configuración de Subasta | F02 | Ninguna | Bajo | Alto | Medio | `En espera` |
 
 ---
@@ -99,15 +99,17 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 
 ---
 
-### F07: Publicación de Resultados y Reasignación por Desistimiento
-- **Objetivo:** Exponer la pantalla oficial de resultados para colaboradores tras el cierre de la subasta, y habilitar en el panel de administración el flujo de desistimiento con reasignación automática al siguiente postor del ranking.
+### F07: Publicación de Resultados y Reasignación por Desistimiento (✅ Completada)
+- **Objetivo:** Exponer la pantalla oficial de resultados para colaboradores y visitantes únicamente cuando el administrador active la publicación oficial en Configuración ("Publicar Resultados"). Mientras no esté publicada, la pestaña se mantiene oculta para colaboradores y visitantes. Incluye vista previa y auditoría permanente para administradores, generación y descarga de reporte de ganadores en CSV para su distribución manual, y flujo de desistimiento con reasignación automática en cascada respetando el tope de 1 bien por categoría o declarando desierto el bien.
 - **Q-xx asociadas:** Q-05 (`✅ Resuelta`).
 - **Riesgo:** Medio. | **Valor:** Alto. | **Esfuerzo:** Medio.
-- **Criterios de Aceptación Iniciales:**
-  - Vista pública de resultados accesible únicamente tras la finalización y procesamiento de la subasta.
-  - Acción de "Marcar Desistido" en el panel de administrador por activo adjudicado.
-  - Reasignación automática instantánea que promueve al siguiente postor del ranking respetando las reglas de equidad de F06.
-  - Trazabilidad y registro de cambios en el estado de la adjudicación.
+- **Criterios de Aceptación Cumplidos:**
+  - Pestaña `/resultados` completamente oculta para colaboradores y visitantes mientras `sub_app_config.resultados_publicados === false`, con redirección automática si intentan acceder directamente por URL.
+  - Control en `/admin/config` con botón modal "Publicar Resultados al Personal" y "Pausar Publicación", sincronizado vía Supabase Realtime.
+  - Administradores cuentan con acceso permanente a `/resultados` con banner informativo y selector de estado.
+  - Generación y descarga de reporte oficial de ganadores en CSV con columnas de auditoría completas para remisión externa manual.
+  - Acción de "Registrar Desistimiento" por bien adjudicado con captura de motivo y reasignación automática al 2º postor en orden de mérito respetando el tope por categoría de F06, o asignación como `Desierto` si no existen más postores elegibles.
+  - Trazabilidad y auditoría completa de los cambios en `sub_auditoria_cambios`.
 
 ---
 

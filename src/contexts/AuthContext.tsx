@@ -57,9 +57,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    if (usuario?.token) {
+      // Invalida el token en el servidor; el cierre local no espera la respuesta
+      supabase.rpc('cerrar_sesion', { p_token: usuario.token }).then(() => undefined);
+    }
     setUsuario(null);
     localStorage.removeItem(STORAGE_KEY);
-  }, []);
+  }, [usuario]);
 
   const registrar = useCallback(async (ci: string, password: string) => {
     try {

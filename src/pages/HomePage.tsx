@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useCountdown } from '../hooks/useCountdown';
 import { useOfertas } from '../hooks/useOfertas';
 import { useActivos } from '../hooks/useActivos';
+import { cn } from '../lib/utils';
 import {
   ArrowRightIcon,
   ClockIcon,
@@ -91,12 +92,19 @@ export function HomePage() {
       </div>
 
       {/* Countdown Timer Card */}
-      <div className="bg-white rounded-2xl border border-gray-200/90 p-6 sm:p-8 shadow-sm">
+      <div className={cn(
+        'rounded-2xl border p-6 sm:p-8 shadow-sm transition-all',
+        countdown.isExpired
+          ? 'bg-gradient-to-r from-rose-50/40 via-white to-white border-rose-200'
+          : 'bg-white border-gray-200/90'
+      )}>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <div className="flex items-center gap-2 text-agrotec-700 text-xs font-bold uppercase tracking-wider mb-1">
-              <ClockIcon className="w-[18px] h-[18px] text-agrotec-600 animate-pulse" />
-              <span>Tiempo Restante para Ofertar</span>
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider mb-1">
+              <ClockIcon className={cn('w-[18px] h-[18px]', countdown.isExpired ? 'text-[#8A2733]' : 'text-[#1C5A34] animate-pulse')} />
+              <span className={countdown.isExpired ? 'text-[#8A2733]' : 'text-[#1C5A34]'}>
+                {countdown.isExpired ? 'Subasta Finalizada' : 'Tiempo Restante para Ofertar'}
+              </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-gray-900">
               {countdown.isExpired
@@ -104,35 +112,57 @@ export function HomePage() {
                 : 'Cierre oficial de la subasta'}
             </h2>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
-              Una vez finalizado el tiempo, ya no se considerarán ofertas.
+              {countdown.isExpired
+                ? 'La recepción de ofertas se encuentra cerrada. Los resultados están en proceso de adjudicación.'
+                : 'Una vez finalizado el tiempo, ya no se considerarán ofertas.'}
             </p>
           </div>
 
           {/* Time digits */}
           <div className="flex items-center gap-2 sm:gap-4">
-            <div className="flex flex-col items-center justify-center w-16 sm:w-20 py-3 rounded-2xl bg-agrotec-50 border border-agrotec-200 text-center">
-              <span className="text-2xl sm:text-3xl font-black text-agrotec-900 font-mono">
+            <div className={cn(
+              'flex flex-col items-center justify-center w-16 sm:w-20 py-3 rounded-2xl text-center border',
+              countdown.isExpired
+                ? 'bg-rose-50 border-rose-200 text-[#8A2733]'
+                : 'bg-agrotec-50 border-agrotec-200 text-agrotec-900'
+            )}>
+              <span className="text-2xl sm:text-3xl font-black font-mono">
                 {String(countdown.days).padStart(2, '0')}
               </span>
               <span className="text-[10px] uppercase font-bold text-gray-500 mt-1">Días</span>
             </div>
             <span className="text-2xl font-bold text-gray-300">:</span>
-            <div className="flex flex-col items-center justify-center w-16 sm:w-20 py-3 rounded-2xl bg-agrotec-50 border border-agrotec-200 text-center">
-              <span className="text-2xl sm:text-3xl font-black text-agrotec-900 font-mono">
+            <div className={cn(
+              'flex flex-col items-center justify-center w-16 sm:w-20 py-3 rounded-2xl text-center border',
+              countdown.isExpired
+                ? 'bg-rose-50 border-rose-200 text-[#8A2733]'
+                : 'bg-agrotec-50 border-agrotec-200 text-agrotec-900'
+            )}>
+              <span className="text-2xl sm:text-3xl font-black font-mono">
                 {String(countdown.hours).padStart(2, '0')}
               </span>
               <span className="text-[10px] uppercase font-bold text-gray-500 mt-1">Horas</span>
             </div>
             <span className="text-2xl font-bold text-gray-300">:</span>
-            <div className="flex flex-col items-center justify-center w-16 sm:w-20 py-3 rounded-2xl bg-agrotec-50 border border-agrotec-200 text-center">
-              <span className="text-2xl sm:text-3xl font-black text-agrotec-900 font-mono">
+            <div className={cn(
+              'flex flex-col items-center justify-center w-16 sm:w-20 py-3 rounded-2xl text-center border',
+              countdown.isExpired
+                ? 'bg-rose-50 border-rose-200 text-[#8A2733]'
+                : 'bg-agrotec-50 border-agrotec-200 text-agrotec-900'
+            )}>
+              <span className="text-2xl sm:text-3xl font-black font-mono">
                 {String(countdown.minutes).padStart(2, '0')}
               </span>
               <span className="text-[10px] uppercase font-bold text-gray-500 mt-1">Min</span>
             </div>
             <span className="text-2xl font-bold text-gray-300">:</span>
-            <div className="flex flex-col items-center justify-center w-16 sm:w-20 py-3 rounded-2xl bg-agrotec-50 border border-agrotec-200 text-center">
-              <span className="text-2xl sm:text-3xl font-black text-agrotec-900 font-mono">
+            <div className={cn(
+              'flex flex-col items-center justify-center w-16 sm:w-20 py-3 rounded-2xl text-center border',
+              countdown.isExpired
+                ? 'bg-rose-50 border-rose-200 text-[#8A2733]'
+                : 'bg-agrotec-50 border-agrotec-200 text-agrotec-900'
+            )}>
+              <span className="text-2xl sm:text-3xl font-black font-mono">
                 {String(countdown.seconds).padStart(2, '0')}
               </span>
               <span className="text-[10px] uppercase font-bold text-gray-500 mt-1">Seg</span>

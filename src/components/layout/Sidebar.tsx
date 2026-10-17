@@ -171,13 +171,17 @@ export function Sidebar({
                   <span className="text-[10px] bg-[#F9D7E0] text-[#8A2733] font-bold px-1.5 py-0.5 rounded">
                     FINALIZADA
                   </span>
+                ) : !countdown.fechaFin ? (
+                  <span className="text-[10px] bg-gray-100 text-gray-600 font-bold px-1.5 py-0.5 rounded">
+                    INACTIVA
+                  </span>
                 ) : (
                   <span className="text-[10px] bg-[#E8F0EB] text-[#1C5A34] font-bold px-1.5 py-0.5 rounded">
                     ACTIVA
                   </span>
                 )}
               </div>
-              <div className="font-mono text-base font-bold tracking-wider text-[#1C5A34]">
+              <div className={cn('font-mono text-base font-bold tracking-wider', countdown.isExpired ? 'text-[#8A2733]' : 'text-[#1C5A34]')}>
                 {countdown.loading ? (
                   <span className="text-xs font-sans text-gray-400 font-normal">Cargando...</span>
                 ) : countdown.isExpired ? (
@@ -222,15 +226,26 @@ export function Sidebar({
                 <ClockCounterClockwiseIcon className="w-[18px] h-[18px] shrink-0" />
                 {!isCollapsed && <span>Mis Ofertas</span>}
               </NavLink>
-              <NavLink
-                to="/resultados"
-                className={navItemClass('Resultados Finales')}
-                onClick={onClose}
-                title="Resultados Finales"
-              >
-                <TrophyIcon className="w-[18px] h-[18px] shrink-0" />
-                {!isCollapsed && <span>Resultados Finales</span>}
-              </NavLink>
+              {(usuario?.es_admin || countdown.resultadosPublicados) && (
+                <NavLink
+                  to="/resultados"
+                  className={navItemClass('Resultados Finales')}
+                  onClick={onClose}
+                  title="Resultados Finales"
+                >
+                  <TrophyIcon className="w-[18px] h-[18px] shrink-0" />
+                  {!isCollapsed && (
+                    <div className="flex items-center justify-between flex-1 pr-1">
+                      <span>Resultados Finales</span>
+                      {usuario?.es_admin && !countdown.resultadosPublicados && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold tracking-tight">
+                          Privado
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </NavLink>
+              )}
             </nav>
           </div>
 

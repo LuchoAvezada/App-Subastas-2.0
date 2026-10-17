@@ -5,32 +5,38 @@ import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import { useToast } from '../ui/Toast';
 import { useCountdown } from '../../hooks/useCountdown';
-import { formatFechaAsuncion } from '../../lib/utils';
+import { useAuth } from '../../hooks/useAuth';
+import { formatFechaAsuncion, parseUtcDate } from '../../lib/utils';
 import {
   CalendarBlankIcon,
   CheckCircleIcon,
   ClockIcon,
+  EyeIcon,
+  EyeSlashIcon,
   FloppyDiskIcon,
   LockIcon,
   LockOpenIcon,
   PlayIcon,
+  ShieldCheckIcon,
   WarningIcon,
 } from '@phosphor-icons/react';
 
 export function ConfigSubasta() {
   const countdown = useCountdown();
+  const { usuario, logout } = useAuth();
   const [fechaFinInput, setFechaFinInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [modalCerrarOpen, setModalCerrarOpen] = useState(false);
   const [modalAbrirOpen, setModalAbrirOpen] = useState(false);
+  const [modalPublicarOpen, setModalPublicarOpen] = useState(false);
   const [opcionHoras, setOpcionHoras] = useState<number>(24);
   const [procesandoAccion, setProcesandoAccion] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
     if (countdown.fechaFin) {
-      // Formato para input datetime-local
-      const d = new Date(countdown.fechaFin);
+      // Formato para input datetime-local basado en el instante UTC interpretado correctamente
+      const d = parseUtcDate(countdown.fechaFin);
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
@@ -72,8 +78,8 @@ export function ConfigSubasta() {
   const handleCerrarInmediato = async () => {
     setProcesandoAccion(true);
     try {
-      // Se establece la fecha de fin a ahora mismo para bloquear de inmediato
-      const isoDate = new Date().toISOString();
+      // Se establece la fecha de fin a 10 segundos atrás para garantizar expiración instantánea en BD y frontend
+      const isoDate = new Date(Date.now() - 10000).toISOString();
 
       const { error } = await supabase
         .from('sub_app_config')
@@ -112,6 +118,30 @@ export function ConfigSubasta() {
     } catch (err) {
       console.error('Error abriendo subasta:', err);
       toast.error('No fue posible abrir la recepción de ofertas.');
+    } finally {
+      setProcesandoAccion(false);
+    }
+  };
+
+  const handleTogglePublicar = async (nuevoEstado: boolean) => {
+    setProcesandoAccion(true);
+    try {
+      const res = await countdown.setPublicarResultados(nuevoEstado, usuario?.token);
+      if (!res.success) {
+        toast.error(res.error || 'No fue posible actualizar el estado de publicación.');
+        if (res.codigo === 'SESION_INVALIDA') logout();
+        return;
+      }
+
+      toast.success(
+        nuevoEstado
+          ? '¡Resultados publicados exitosamente para todo el personal!'
+          : 'Publicación pausada. La pestaña Resultados Finales vuelve a estar oculta para los colaboradores.'
+      );
+      setModalPublicarOpen(false);
+    } catch (err) {
+      console.error('Error actualizando estado de publicación:', err);
+      toast.error('No fue posible actualizar el estado de publicación.');
     } finally {
       setProcesandoAccion(false);
     }
@@ -227,6 +257,74 @@ export function ConfigSubasta() {
         </form>
       </div>
 
+      {/* Publicación de Resultados Oficiales */}
+      <div className="bg-white rounded-3xl border border-gray-200/90 p-6 sm:p-8 shadow-sm space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-gray-100">
+          <div>
+            <div className="flex items-center gap-2">
+              <ShieldCheckIcon className="w-[22px] h-[22px] text-[#1C5A34]" />
+              <h3 className="text-lg font-black text-gray-900 tracking-tight">
+                Publicación de Resultados Oficiales
+              </h3>
+            </div>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1 max-w-xl">
+              La pestaña <strong>Resultados Finales</strong> se mantiene completamente oculta para colaboradores y visitantes hasta que active la publicación aquí.
+            </p>
+          </div>
+
+          <div className="shrink-0">
+            {countdown.resultadosPublicados ? (
+              <Button
+                variant="outline"
+                size="md"
+                className="border-amber-300 text-amber-800 hover:bg-amber-50"
+                leftIcon={<EyeSlashIcon className="w-[18px] h-[18px]" />}
+                onClick={() => setModalPublicarOpen(true)}
+              >
+                Pausar Publicación
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                size="md"
+                leftIcon={<EyeIcon className="w-[18px] h-[18px]" />}
+                onClick={() => setModalPublicarOpen(true)}
+              >
+                Publicar Resultados al Personal
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Estado actual de visibilidad */}
+        <div className="p-4.5 rounded-2xl bg-[#F5F5F5] border border-[#E4E4E4] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
+              Visibilidad de la Pestaña Resultados Finales
+            </span>
+            <span className="text-sm font-extrabold text-gray-900 mt-0.5 block">
+              {countdown.resultadosPublicados
+                ? 'Visible Públicamente para Todo el Personal'
+                : 'Oculta al Personal (Solo Visible para Administradores)'}
+            </span>
+          </div>
+
+          <div>
+            {countdown.resultadosPublicados ? (
+              <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                Publicado Oficialmente
+              </span>
+            ) : (
+              <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse" />
+                Pestaña Oculta / Modo Privado
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Modal Confirmación de Cierre Inmediato */}
       {modalCerrarOpen && (
         <Modal
@@ -339,6 +437,65 @@ export function ConfigSubasta() {
                 onClick={() => handleAbrirConPlazo(opcionHoras)}
               >
                 Habilitar Ofertas ({opcionHoras >= 24 ? `${opcionHoras / 24}d` : `${opcionHoras}h`})
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal Confirmación Publicación de Resultados */}
+      {modalPublicarOpen && (
+        <Modal
+          isOpen={modalPublicarOpen}
+          onClose={() => !procesandoAccion && setModalPublicarOpen(false)}
+          title={
+            <span className="flex items-center gap-2 text-agrotec-800">
+              <ShieldCheckIcon className="w-[22px] h-[22px] text-agrotec-800" />
+              <span>
+                {countdown.resultadosPublicados
+                  ? 'Pausar Publicación Oficial de Resultados'
+                  : 'Publicar Resultados Oficiales al Personal'}
+              </span>
+            </span>
+          }
+          description="Aprobación formal de gobernanza y visualización de ganadores."
+          size="md"
+        >
+          <div className="space-y-4 text-xs text-gray-700 leading-relaxed">
+            <div
+              className={`p-3.5 rounded-xl border ${
+                countdown.resultadosPublicados
+                  ? 'bg-amber-50 border-amber-200 text-amber-900'
+                  : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+              }`}
+            >
+              <p className="font-semibold">
+                {countdown.resultadosPublicados
+                  ? '¿Desea pausar la visibilidad de los resultados?'
+                  : '¿Confirma que desea publicar los resultados oficiales al personal?'}
+              </p>
+              <p className="mt-1 text-[11px]">
+                {countdown.resultadosPublicados
+                  ? 'La pestaña Resultados Finales volverá a ocultarse para el personal y dejará de ser accesible.'
+                  : 'Al publicar, la pestaña Resultados Finales se activará para que todos los colaboradores y visitantes puedan consultar las adjudicaciones.'}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3">
+              <Button
+                variant="outline"
+                disabled={procesandoAccion}
+                onClick={() => setModalPublicarOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant={countdown.resultadosPublicados ? 'outline' : 'primary'}
+                isLoading={procesandoAccion}
+                leftIcon={countdown.resultadosPublicados ? <EyeSlashIcon className="w-[18px] h-[18px]" /> : <EyeIcon className="w-[18px] h-[18px]" />}
+                onClick={() => handleTogglePublicar(!countdown.resultadosPublicados)}
+              >
+                {countdown.resultadosPublicados ? 'Confirmar Pausa' : 'Confirmar Publicación'}
               </Button>
             </div>
           </div>

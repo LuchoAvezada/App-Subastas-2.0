@@ -10,6 +10,8 @@ export interface Usuario {
   nombre: string;
   id_rol: number | null;
   es_admin: boolean;
+  /** Token de sesión emitido por autenticar_usuario; las funciones de admin lo exigen. */
+  token?: string;
 }
 
 /** Roles del sistema. Solo USUARIO participa de la subasta. */
@@ -96,6 +98,8 @@ export interface ResultadoDetalle {
   criterio_desempate: string;
   fecha_cierre_display: string;
   fecha_cierre: string;
+  estado_adjudicacion?: 'Adjudicado' | 'Desistido' | 'Reasignado' | 'Desierto';
+  motivo_desistimiento?: string | null;
 }
 
 /** Collaborator data from view */
@@ -133,6 +137,7 @@ export interface Rol {
 export interface AppConfig {
   id: number;
   fecha_fin_subasta: string | null;
+  resultados_publicados?: boolean;
 }
 
 /** Generic RPC response */

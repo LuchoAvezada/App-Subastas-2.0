@@ -112,7 +112,7 @@ export function Modal({
           tabIndex={-1}
           className={cn(
             'relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all',
-            'w-full sm:my-8 animate-scale-in border border-gray-100 focus:outline-none',
+            'w-full my-4 animate-scale-in border border-gray-100 focus:outline-none max-h-[calc(100vh-2rem)] flex flex-col',
             sizeClasses[size],
             className
           )}
@@ -120,7 +120,7 @@ export function Modal({
         >
           {/* Header */}
           {(title || description) && (
-            <div className="flex items-start justify-between border-b border-gray-100 px-6 py-4 bg-gray-50/50">
+            <div className="flex items-start justify-between border-b border-gray-100 px-6 py-4 bg-gray-50/50 shrink-0">
               <div>
                 {title && (
                   <h3 id={titleId} className="text-lg font-bold text-gray-900 tracking-tight">
@@ -143,7 +143,7 @@ export function Modal({
           )}
 
           {/* Body */}
-          <div className="px-6 py-5">{children}</div>
+          <div className="px-6 py-5 overflow-y-auto">{children}</div>
         </div>
       </div>
     </div>

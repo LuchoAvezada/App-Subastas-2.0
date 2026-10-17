@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { CountdownProvider } from './contexts/CountdownContext';
 import { ToastProvider } from './components/ui/Toast';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { AdminRoute } from './components/layout/AdminRoute';
@@ -24,40 +25,42 @@ import { AdminConfigPage } from './pages/admin/AdminConfigPage';
 export default function App() {
   return (
     <AuthProvider>
-      <ToastProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Rutas Públicas de Autenticación */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/registro" element={<RegistroPage />} />
+      <CountdownProvider>
+        <ToastProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Rutas Públicas de Autenticación */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/registro" element={<RegistroPage />} />
 
-            {/* Rutas Protegidas dentro del Shell con Layout */}
-            <Route
-              element={
-                <ProtectedRoute>
-                  <Layout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/" element={<HomePage />} />
-              <Route path="/catalogo/:categoria" element={<CatalogoPage />} />
-              <Route path="/mis-ofertas" element={<MisOfertasPage />} />
-              <Route path="/resultados" element={<ResultadosPage />} />
+              {/* Rutas Protegidas dentro del Shell con Layout */}
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <Layout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/" element={<HomePage />} />
+                <Route path="/catalogo/:categoria" element={<CatalogoPage />} />
+                <Route path="/mis-ofertas" element={<MisOfertasPage />} />
+                <Route path="/resultados" element={<ResultadosPage />} />
 
-              {/* Rutas de Administración (requieren es_admin = true) */}
-              <Route element={<AdminRoute />}>
-                <Route path="/admin/ofertas" element={<AdminOfertasPage />} />
-                <Route path="/admin/activos" element={<AdminActivosPage />} />
-                <Route path="/admin/colaboradores" element={<AdminColaboradoresPage />} />
-                <Route path="/admin/config" element={<AdminConfigPage />} />
+                {/* Rutas de Administración (requieren es_admin = true) */}
+                <Route element={<AdminRoute />}>
+                  <Route path="/admin/ofertas" element={<AdminOfertasPage />} />
+                  <Route path="/admin/activos" element={<AdminActivosPage />} />
+                  <Route path="/admin/colaboradores" element={<AdminColaboradoresPage />} />
+                  <Route path="/admin/config" element={<AdminConfigPage />} />
+                </Route>
               </Route>
-            </Route>
 
-            {/* Redirección por defecto */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </ToastProvider>
+              {/* Redirección por defecto */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </ToastProvider>
+      </CountdownProvider>
     </AuthProvider>
   );
 }
