@@ -12,8 +12,8 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 | **F01** | Base del Proyecto y Tokens de Identidad Visual Agrotec | — | Ninguna | Bajo | Alto | Bajo | `✅ Completada` |
 | **F02** | Autenticación por Cédula y Seguridad de Acceso | F01 | Ninguna | Medio | Crítico | Medio | `✅ Completada` |
 | **F03** | Gestión de Activos y Carga de Fotos (Panel Admin) | F01, F02 | Ninguna | Medio | Alto | Medio | `✅ Completada` |
-| **F04** | Catálogo de Activos, Visibilidad de Ofertas y Pujas | F01, F02, F03 | Ninguna | Alto | Crítico | Medio | `Listo para spec` |
-| **F05** | Mis Ofertas y Cancelación de Oferta con Veto | F04 | Ninguna | Medio | Alto | Bajo | `En espera` |
+| **F04** | Catálogo de Activos, Visibilidad de Ofertas y Pujas | F01, F02, F03 | Ninguna | Alto | Crítico | Medio | `✅ Completada` |
+| **F05** | Mis Ofertas y Cancelación de Oferta con Veto | F04 | Ninguna | Medio | Alto | Bajo | `✅ Completada` |
 | **F06** | Procesamiento de Ganadores, Tope por Categoría y Desempate | F04 | Ninguna | Alto | Crítico | Alto | `En espera` |
 | **F07** | Publicación de Resultados y Reasignación por Desistimiento | F06 | Ninguna | Medio | Alto | Medio | `En espera` |
 | **F08** | Carga Masiva de Colaboradores y Configuración de Subasta | F02 | Ninguna | Bajo | Alto | Medio | `En espera` |
@@ -71,7 +71,6 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
   - Bloqueo automático de nuevas ofertas una vez alcanzada la fecha de fin de subasta.
   - El administrador cuenta con un botón en Configuración para cerrar/abrir manualmente la recepción de ofertas inmediatamente, además del temporizador programado.
   - Opción ergonómica de compactar (`w-20`) y expandir (`w-72`) la barra lateral en escritorio con persistencia en `localStorage`.
-  
 
 ---
 
