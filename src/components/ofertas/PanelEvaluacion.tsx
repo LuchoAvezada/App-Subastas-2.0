@@ -360,13 +360,20 @@ export function PanelEvaluacion() {
         <div className="space-y-4">
           <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-3">
             <WarningIcon className="w-[22px] h-[22px] text-amber-600 shrink-0 mt-0.5" />
-            <div className="leading-relaxed">
-              <strong>Atención:</strong> Al ejecutar el procedimiento <code>procesar_ganadores()</code>, el sistema limpiará resultados anteriores, evaluará todas las ofertas aplicando los criterios de monto, jerarquía y antigüedad, y marcará los activos como <strong>Adjudicados</strong>.
+            <div className="leading-relaxed space-y-1.5">
+              <div>
+                <strong>Atención:</strong> Al ejecutar el procedimiento <code>procesar_ganadores()</code>, el sistema limpiará resultados anteriores y evaluará todas las ofertas aplicando:
+              </div>
+              <ul className="list-disc list-inside pl-1 text-[11px] text-amber-800 space-y-0.5">
+                <li><strong>Tope de equidad (Q-03):</strong> Máximo 1 activo adjudicado por categoría por colaborador.</li>
+                <li><strong>Efecto cascada:</strong> Si un postor lidera múltiples activos en una categoría, se le adjudica el de mayor monto y los demás se reasignan al siguiente postor elegible.</li>
+                <li><strong>Desempates determinísticos:</strong> 1º Monto, 2º Nivel de Jerarquía, 3º Antigüedad de ingreso.</li>
+              </ul>
             </div>
           </div>
 
           <p className="text-xs text-gray-600 leading-relaxed">
-            Se recomienda realizar este paso únicamente una vez alcanzada la fecha y hora de cierre oficial de la subasta.
+            Los activos asignados pasarán al estado <strong>Adjudicado</strong> y se generará la publicación oficial en <em>Resultados Finales</em>.
           </p>
 
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">

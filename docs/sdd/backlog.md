@@ -14,7 +14,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 | **F03** | Gestión de Activos y Carga de Fotos (Panel Admin) | F01, F02 | Ninguna | Medio | Alto | Medio | `✅ Completada` |
 | **F04** | Catálogo de Activos, Visibilidad de Ofertas y Pujas | F01, F02, F03 | Ninguna | Alto | Crítico | Medio | `✅ Completada` |
 | **F05** | Mis Ofertas y Cancelación de Oferta con Veto | F04 | Ninguna | Medio | Alto | Bajo | `✅ Completada` |
-| **F06** | Procesamiento de Ganadores, Tope por Categoría y Desempate | F04 | Ninguna | Alto | Crítico | Alto | `En espera` |
+| **F06** | Procesamiento de Ganadores, Tope por Categoría y Desempate | F04 | Ninguna | Alto | Crítico | Alto | `✅ Completada` |
 | **F07** | Publicación de Resultados y Reasignación por Desistimiento | F06 | Ninguna | Medio | Alto | Medio | `En espera` |
 | **F08** | Carga Masiva de Colaboradores y Configuración de Subasta | F02 | Ninguna | Bajo | Alto | Medio | `En espera` |
 
@@ -87,7 +87,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 
 ---
 
-### F06: Procesamiento de Ganadores, Tope por Categoría y Desempate
+### F06: Procesamiento de Ganadores, Tope por Categoría y Desempate (✅ Completada)
 - **Objetivo:** Implementar el algoritmo de adjudicación automática ejecutado por el administrador al finalizar la subasta, aplicando el tope de máximo 1 activo adjudicado por categoría por colaborador y los criterios de desempate ordenados (1º monto, 2º jerarquía de cargo, 3º antigüedad).
 - **Q-xx asociadas:** Q-03 (`✅ Resuelta`).
 - **Riesgo:** Alto. | **Valor:** Crítico. | **Esfuerzo:** Alto.
