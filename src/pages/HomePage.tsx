@@ -57,36 +57,49 @@ export function HomePage() {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Welcome Hero Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-agrotec-900 via-agrotec-800 to-agrotec-700 text-white p-6 sm:p-10 shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-agrotec-900 via-agrotec-800 to-agrotec-700 text-white p-6 sm:p-8 lg:p-10 shadow-xl">
         <div className="absolute right-0 top-0 -mt-10 -mr-10 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute right-1/4 bottom-0 w-64 h-32 bg-agrotec-500/20 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-agrotec-100 text-xs font-semibold mb-4 backdrop-blur-sm">
-            <SparkleIcon className="w-4 h-4 text-agrotec-300" />
-            <span>Subasta Interna Agrotec 2026</span>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="max-w-xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-agrotec-100 text-xs font-semibold mb-4 backdrop-blur-sm">
+              <SparkleIcon className="w-4 h-4 text-agrotec-300" />
+              <span>Subasta Interna Agrotec 2026</span>
+            </div>
+
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
+              Bienvenido, {usuario?.nombre.split(' ')[0]}
+            </h1>
+            <p className="mt-3 text-sm sm:text-base text-agrotec-100 leading-relaxed">
+              Participe de la subasta de activos tecnológicos. Explore los catálogos de equipos y registre sus ofertas antes del cierre oficial.
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                to="/catalogo/notebooks"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-agrotec-900 font-bold text-sm shadow-md hover:bg-agrotec-50 transition-all active:scale-95"
+              >
+                <span>Explorar Catálogo</span>
+                <ArrowRightIcon className="w-[18px] h-[18px]" />
+              </Link>
+              <Link
+                to="/mis-ofertas"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/20 text-white hover:bg-white/30 font-medium text-sm transition-all border border-white/20"
+              >
+                <span>Ver mis ofertas ({misOfertas.length})</span>
+              </Link>
+            </div>
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
-            Bienvenido, {usuario?.nombre.split(' ')[0]}
-          </h1>
-          <p className="mt-3 text-sm sm:text-base text-agrotec-100 leading-relaxed">
-            Participe de la subasta de activos tecnológicos. Explore los catálogos de equipos y registre sus ofertas antes del cierre oficial.
-          </p>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              to="/catalogo/notebooks"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-agrotec-900 font-bold text-sm shadow-md hover:bg-agrotec-50 transition-all active:scale-95"
-            >
-              <span>Explorar Catálogo</span>
-              <ArrowRightIcon className="w-[18px] h-[18px]" />
-            </Link>
-            <Link
-              to="/mis-ofertas"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/20 text-white hover:bg-white/30 font-medium text-sm transition-all border border-white/20"
-            >
-              <span>Ver mis ofertas ({misOfertas.length})</span>
-            </Link>
+          {/* Mascota Oficial Nino */}
+          <div className="flex justify-center md:justify-end items-end shrink-0 -mb-6 sm:-mb-8 lg:-mb-10 self-center md:self-end">
+            <img
+              src="/brand/mascota-nino.png"
+              alt="Nino - Mascota Oficial Agrotec"
+              className="w-56 sm:w-64 md:w-72 lg:w-96 xl:w-[420px] max-w-full h-auto object-contain select-none pointer-events-none drop-shadow-2xl transition-transform duration-300 hover:scale-105"
+              loading="eager"
+            />
           </div>
         </div>
       </div>
