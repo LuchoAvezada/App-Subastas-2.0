@@ -15,6 +15,18 @@ Esta guía documenta los pasos para levantar el entorno de desarrollo, ejecutar 
   - `14_hardening_api.sql` (F09) quita a la anon key toda escritura directa y la lectura de `sub_usuarios`: desde ahí, toda escritura pasa por RPC con el token de sesión. Es idempotente.
     - Se aplica junto con el frontend que la usa: el frontend anterior deja de poder escribir.
     - Después, todos deben volver a iniciar sesión.
+  - `15_registro_migraciones.sql` crea `sub_migraciones`. Desde ahí, cada script nuevo termina insertando su nombre en esa tabla, y `SELECT * FROM sub_migraciones` muestra qué tiene aplicado cada base.
+  - `scripts/huella_esquema.sql` resume funciones, tablas, vistas, permisos de `anon` y políticas en una fila con hash por elemento. Si la huella del servidor coincide con la de una instalación limpia del repo, el esquema es el mismo.
+
+## Publicación en el servidor on-prem (NUC)
+
+- **Frontend:** desde la raíz del repo, en `main` y sin cambios sin commitear, ejecuta `.\scripts\deploy.ps1`.
+  - El script se niega a publicar si hay algo sin commitear: así lo que corre en el NUC siempre es un commit de git.
+  - Deja el commit publicado en `http://20.20.20.77/version.txt`.
+- **Base de datos:** las migraciones no las aplica el script. Se aplican a mano en el NUC, de a una y en orden:
+  ```bash
+  docker exec -i supabase-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < NN_archivo.sql
+  ```
 
 > [!NOTE]
 > En entornos Windows PowerShell, si la política de scripts bloquea `npm.ps1`, utiliza el comando `npm.cmd` (ejemplo: `npm.cmd run dev`).

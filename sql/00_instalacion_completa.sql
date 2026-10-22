@@ -1366,6 +1366,24 @@ BEGIN
 END $$;
 
 -- ═══════════════════════════════════════════════════════════
+-- 13. REGISTRO DE MIGRACIONES — esta instalación ya incluye
+--     todo hasta 15; los scripts nuevos se registran al aplicarse
+-- ═══════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS sub_migraciones (
+    archivo   TEXT PRIMARY KEY,
+    aplicada  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+REVOKE ALL ON sub_migraciones FROM PUBLIC, anon, authenticated;
+
+INSERT INTO sub_migraciones (archivo) VALUES
+('00_instalacion_completa.sql'),
+('14_hardening_api.sql'),
+('15_registro_migraciones.sql')
+ON CONFLICT (archivo) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════
 -- FIN. Próximos pasos (fuera de este script):
 --  1) Cargar colaboradores reales (o importar CSV desde el panel admin).
 --  2) Marcar al administrador:  UPDATE sub_colaboradores SET id_rol = 1
