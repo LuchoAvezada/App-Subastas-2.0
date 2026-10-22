@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from 'react';
-import { supabase } from '../../lib/supabase';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import { useToast } from '../ui/Toast';
 import { useCountdown } from '../../hooks/useCountdown';
 import { useAuth } from '../../hooks/useAuth';
+import { useRpcSesion } from '../../hooks/useRpcSesion';
 import { asuncionAUtcIso, formatFechaAsuncion } from '../../lib/utils';
 import {
   CalendarBlankIcon,
@@ -36,6 +36,12 @@ export function ConfigSubasta() {
   const [opcionHoras, setOpcionHoras] = useState<number>(24);
   const [procesandoAccion, setProcesandoAccion] = useState(false);
   const toast = useToast();
+  const rpc = useRpcSesion();
+
+  const guardarFechaCierre = async (fechaIso: string) => {
+    const res = await rpc('actualizar_fecha_cierre', { p_fecha_fin: fechaIso });
+    if (!res.success) throw new Error(res.error);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -48,12 +54,7 @@ export function ConfigSubasta() {
     try {
       const isoDate = asuncionAUtcIso(fechaFinInput);
 
-      const { error } = await supabase
-        .from('sub_app_config')
-        .update({ fecha_fin_subasta: isoDate })
-        .eq('id', 1);
-
-      if (error) throw error;
+      await guardarFechaCierre(isoDate);
 
       toast.success('Fecha de cierre de subasta actualizada.');
       await countdown.refreshConfig();
@@ -73,12 +74,7 @@ export function ConfigSubasta() {
       // Se establece la fecha de fin a 10 segundos atrás para garantizar expiración instantánea en BD y frontend
       const isoDate = new Date(Date.now() - 10000).toISOString();
 
-      const { error } = await supabase
-        .from('sub_app_config')
-        .update({ fecha_fin_subasta: isoDate })
-        .eq('id', 1);
-
-      if (error) throw error;
+      await guardarFechaCierre(isoDate);
 
       toast.success('La recepción de ofertas ha sido cerrada con éxito.');
       setModalCerrarOpen(false);
@@ -98,12 +94,7 @@ export function ConfigSubasta() {
     try {
       const fechaNueva = new Date(Date.now() + horas * 60 * 60 * 1000).toISOString();
 
-      const { error } = await supabase
-        .from('sub_app_config')
-        .update({ fecha_fin_subasta: fechaNueva })
-        .eq('id', 1);
-
-      if (error) throw error;
+      await guardarFechaCierre(fechaNueva);
 
       toast.success(`Recepción de ofertas abierta por ${horas >= 24 ? `${horas / 24} día(s)` : `${horas} hora(s)`}.`);
       setModalAbrirOpen(false);

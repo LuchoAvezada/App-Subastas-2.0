@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { useToast } from '../ui/Toast';
+import { useRpcSesion } from '../../hooks/useRpcSesion';
 import { ROL } from '../../types/domain';
 import type { DatosColaborador } from '../../types/domain';
 import { WarningCircleIcon } from '@phosphor-icons/react';
@@ -43,6 +44,7 @@ export function ColaboradorForm({ colaborador, onSuccess, onCancel }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const toast = useToast();
+  const rpc = useRpcSesion();
 
   useEffect(() => {
     supabase
@@ -65,39 +67,24 @@ export function ColaboradorForm({ colaborador, onSuccess, onCancel }: Props) {
     }
 
     setSaving(true);
-    try {
-      const payload = {
-        ci_documento: ciDocumento.trim(),
-        nombre: nombre.trim(),
-        fecha_ingreso: fechaIngreso,
-        habilitado,
-        id_cargo: Number(idCargo),
-        id_rol: idRol,
-      };
+    // Sin id_colaborador en el alta: lo asigna la secuencia. La cédula repetida la informa el servidor.
+    const res = await rpc('guardar_colaborador', {
+      p_id_colaborador: colaborador?.id_colaborador ?? null,
+      p_ci_documento: ciDocumento.trim(),
+      p_nombre: nombre.trim(),
+      p_fecha_ingreso: fechaIngreso,
+      p_habilitado: habilitado,
+      p_id_cargo: Number(idCargo),
+      p_id_rol: idRol,
+    });
+    setSaving(false);
 
-      // Sin id_colaborador en el alta: lo asigna la secuencia (ya reajustada a 310).
-      const { error: dbError } = colaborador
-        ? await supabase
-            .from('sub_colaboradores')
-            .update(payload)
-            .eq('id_colaborador', colaborador.id_colaborador)
-        : await supabase.from('sub_colaboradores').insert(payload);
-
-      if (dbError) throw dbError;
-
-      toast.success(colaborador ? 'Colaborador actualizado' : 'Colaborador registrado');
-      onSuccess();
-    } catch (err) {
-      const msg = (err as { message?: string })?.message || '';
-      // ci_documento es UNIQUE: el choque es el error esperable más común.
-      setError(
-        msg.includes('duplicate') || msg.includes('unique')
-          ? 'Ya existe un colaborador con esa cédula.'
-          : msg || 'No se pudo guardar el colaborador.'
-      );
-    } finally {
-      setSaving(false);
+    if (!res.success) {
+      setError(res.error || 'No se pudo guardar el colaborador.');
+      return;
     }
+    toast.success(colaborador ? 'Colaborador actualizado' : 'Colaborador registrado');
+    onSuccess();
   };
 
   return (

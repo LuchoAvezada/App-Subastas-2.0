@@ -4,6 +4,7 @@ import { formatUSD } from '../../lib/utils';
 import { Button } from '../ui/Button';
 import { Spinner } from '../ui/Spinner';
 import { useToast } from '../ui/Toast';
+import { useRpcSesion } from '../../hooks/useRpcSesion';
 import { Modal } from '../ui/Modal';
 import {
   ArrowsClockwiseIcon,
@@ -27,6 +28,7 @@ export function PanelEvaluacion() {
 
   const toast = useToast();
   const navigate = useNavigate();
+  const rpc = useRpcSesion();
 
   const fetchOfertas = useCallback(async () => {
     setLoading(true);
@@ -113,19 +115,14 @@ export function PanelEvaluacion() {
   const handleEjecutarAdjudicacion = async () => {
     setProcessing(true);
     try {
-      const { data, error } = await supabase.rpc('procesar_ganadores');
-
-      if (error) {
-        throw error;
-      }
-
-      const res = data as unknown as { success: boolean; message?: string; total_adjudicados?: number };
+      // Adjudicar borra y recalcula los resultados: el servidor exige token de administrador
+      const res = await rpc<{ total_adjudicados: number }>('procesar_ganadores');
       if (res.success) {
         toast.success(`¡Proceso completado! Se adjudicaron ${res.total_adjudicados || 0} activos.`);
         setIsProcessModalOpen(false);
         navigate('/resultados');
       } else {
-        toast.error(res.message || 'Error al procesar ganadores');
+        toast.error(res.error || res.message || 'Error al procesar ganadores');
       }
     } catch (err) {
       console.error('Error en procesar_ganadores:', err);

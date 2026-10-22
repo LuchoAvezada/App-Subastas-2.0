@@ -145,4 +145,6 @@ export interface RpcResponse {
   success: boolean;
   error?: string;
   message?: string;
+  /** 'SESION_INVALIDA' cuando el token no es válido o venció */
+  codigo?: string;
 }

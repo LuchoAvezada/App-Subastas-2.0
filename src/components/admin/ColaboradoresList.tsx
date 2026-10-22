@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Spinner } from '../ui/Spinner';
 import { useToast } from '../ui/Toast';
+import { useRpcSesion } from '../../hooks/useRpcSesion';
 import { Modal } from '../ui/Modal';
 import {
   ArrowsClockwiseIcon,
@@ -100,6 +101,7 @@ export function ColaboradoresList() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const toast = useToast();
+  const rpc = useRpcSesion();
 
   const fetchColaboradores = useCallback(async () => {
     setLoading(true);
@@ -127,20 +129,16 @@ export function ColaboradoresList() {
 
   const toggleHabilitado = async (idColaborador: number, estadoActual: string) => {
     const nuevoEstado = estadoActual === 'SI' ? 'NO' : 'SI';
-    try {
-      const { error } = await supabase
-        .from('sub_colaboradores')
-        .update({ habilitado: nuevoEstado })
-        .eq('id_colaborador', idColaborador);
+    const res = await rpc('habilitar_colaborador', {
+      p_id_colaborador: idColaborador,
+      p_habilitado: nuevoEstado,
+    });
 
-      if (error) {
-        toast.error(`Error al actualizar colaborador: ${error.message}`);
-      } else {
-        toast.success(`Colaborador ${nuevoEstado === 'SI' ? 'habilitado' : 'deshabilitado'}`);
-        fetchColaboradores();
-      }
-    } catch {
-      toast.error('Error al actualizar estado');
+    if (!res.success) {
+      toast.error(`Error al actualizar colaborador: ${res.error}`);
+    } else {
+      toast.success(`Colaborador ${nuevoEstado === 'SI' ? 'habilitado' : 'deshabilitado'}`);
+      fetchColaboradores();
     }
   };
 

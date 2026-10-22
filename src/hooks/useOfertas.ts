@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
+import { useRpcSesion } from './useRpcSesion';
 import { hasVetoColaborador, registrarVeto } from '../lib/vetos';
 import type { OfertaRecibida, RpcResponse } from '../types/domain';
 
 export function useOfertas() {
   const { usuario } = useAuth();
+  const rpc = useRpcSesion();
   const [misOfertas, setMisOfertas] = useState<OfertaRecibida[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,17 +66,8 @@ export function useOfertas() {
     }
 
     try {
-      const { data, error: rpcError } = await supabase.rpc('registrar_oferta', {
-        p_id_activo: idActivo,
-        p_ci_documento: usuario.ci_documento,
-        p_monto: monto,
-      });
-
-      if (rpcError) {
-        return { success: false, error: rpcError.message };
-      }
-
-      const response = data as unknown as RpcResponse;
+      // El colaborador lo identifica el servidor por el token, no por la cédula
+      const response = await rpc('registrar_oferta', { p_id_activo: idActivo, p_monto: monto });
       if (response.success) {
         await fetchMisOfertas();
       }
@@ -122,39 +115,10 @@ export function useOfertas() {
         }
       }
 
-      // 2. Intentar la anulación de la oferta en la base de datos
-      let eliminadaEnBD = false;
-
-      // 2.a Mediante función RPC con SECURITY DEFINER (sql/10_cancelar_oferta.sql)
-      try {
-        const { data: rpcData, error: rpcError } = await supabase.rpc('cancelar_oferta', {
-          p_id_oferta: idOferta,
-          p_ci_documento: usuario.ci_documento,
-        });
-
-        if (!rpcError && rpcData) {
-          const resp = rpcData as { success: boolean; error?: string };
-          if (resp.success) {
-            eliminadaEnBD = true;
-          } else if (resp.error) {
-            return { success: false, error: resp.error };
-          }
-        }
-      } catch (rpcErr) {
-        console.warn('RPC cancelar_oferta no disponible o arrojó excepción:', rpcErr);
-      }
-
-      // 2.b Fallback directo a DELETE sobre sub_ofertas (si políticas RLS fueron configuradas)
-      if (!eliminadaEnBD) {
-        const { error: deleteError } = await supabase
-          .from('sub_ofertas')
-          .delete()
-          .eq('id_oferta', idOferta)
-          .eq('id_colaborador', usuario.id_colaborador);
-
-        if (deleteError) {
-          console.warn('DELETE directo en sub_ofertas arrojó error:', deleteError);
-        }
+      // 2. Anular en la base: el servidor verifica que la oferta sea del dueño del token
+      const resp = await rpc('cancelar_oferta', { p_id_oferta: idOferta });
+      if (!resp.success) {
+        return { success: false, error: resp.error || 'No se pudo anular la oferta.' };
       }
 
       // 3. Registrar veto permanente en el activo (Principio Constitucional P9)

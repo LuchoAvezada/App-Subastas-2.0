@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { useToast } from '../ui/Toast';
+import { useRpcSesion } from '../../hooks/useRpcSesion';
 import type { Activo } from '../../types/domain';
 import { comprimirImagen } from '../../lib/image';
 import { ImageIcon, UploadSimpleIcon, WarningCircleIcon } from '@phosphor-icons/react';
@@ -35,6 +36,7 @@ export function ActivoForm({ activoToEdit, onSuccess, onCancel }: ActivoFormProp
   const [error, setError] = useState<string | null>(null);
 
   const toast = useToast();
+  const rpc = useRpcSesion();
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -84,43 +86,31 @@ export function ActivoForm({ activoToEdit, onSuccess, onCancel }: ActivoFormProp
       let urlFinal = fotoUrl;
       if (fotoBlob) {
         const ext = fotoBlob.type === 'image/webp' ? 'webp' : 'jpg';
-        const filePath = `fotos/activo_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+        // Storage solo acepta la subida en una ruta que entregó el servidor a un admin (F09).
+        const permiso = await rpc<{ ruta: string }>('autorizar_subida_foto', { p_extension: ext });
+        if (!permiso.success || !permiso.ruta) throw new Error(permiso.error);
         const { error: uploadError } = await supabase.storage
           .from('activos')
-          .upload(filePath, fotoBlob, { upsert: true, contentType: fotoBlob.type });
+          .upload(permiso.ruta, fotoBlob, { contentType: fotoBlob.type });
         if (uploadError) throw uploadError;
-        urlFinal = supabase.storage.from('activos').getPublicUrl(filePath).data.publicUrl;
+        urlFinal = supabase.storage.from('activos').getPublicUrl(permiso.ruta).data.publicUrl;
       }
 
-      const payload = {
-        id_categoria: idCategoria,
-        marca: marca.trim() || null,
-        modelo: modelo.trim() || null,
-        serialnumber: serialnumber.trim() || null,
-        fam: fam.trim() || null,
-        observacion: observacion.trim() || null,
-        precio_base: basePriceNum,
-        estado,
-        foto_url: urlFinal.trim() || null,
-      };
+      const res = await rpc('guardar_activo', {
+        p_id_activo: activoToEdit?.id_activo ?? null,
+        p_id_categoria: idCategoria,
+        p_marca: marca.trim() || null,
+        p_modelo: modelo.trim() || null,
+        p_serialnumber: serialnumber.trim() || null,
+        p_fam: fam.trim() || null,
+        p_observacion: observacion.trim() || null,
+        p_precio_base: basePriceNum,
+        p_estado: estado,
+        p_foto_url: urlFinal.trim() || null,
+      });
+      if (!res.success) throw new Error(res.error);
 
-      if (activoToEdit?.id_activo) {
-        const { error: updateError } = await supabase
-          .from('sub_activos')
-          .update(payload)
-          .eq('id_activo', activoToEdit.id_activo);
-
-        if (updateError) throw updateError;
-        toast.success('Activo actualizado correctamente');
-      } else {
-        const { error: insertError } = await supabase
-          .from('sub_activos')
-          .insert(payload);
-
-        if (insertError) throw insertError;
-        toast.success('Activo creado correctamente');
-      }
-
+      toast.success(activoToEdit ? 'Activo actualizado correctamente' : 'Activo creado correctamente');
       onSuccess();
     } catch (err) {
       console.error('Error guardando activo:', err);

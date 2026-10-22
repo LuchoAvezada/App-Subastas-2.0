@@ -7,6 +7,7 @@ import { Input } from '../../components/ui/Input';
 import { EstadoBadge } from '../../components/ui/Badge';
 import { Spinner } from '../../components/ui/Spinner';
 import { useToast } from '../../components/ui/Toast';
+import { useRpcSesion } from '../../hooks/useRpcSesion';
 import { formatUSD } from '../../lib/utils';
 import type { Activo } from '../../types/domain';
 import { ArrowsClockwiseIcon, ImageIcon, MagnifyingGlassIcon, PackageIcon, PencilSimpleLineIcon, StackIcon, TrashIcon, WarningCircleIcon, WarningIcon } from '@phosphor-icons/react';
@@ -23,6 +24,7 @@ export function AdminActivosPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const toast = useToast();
+  const rpc = useRpcSesion();
 
   const fetchActivos = useCallback(async () => {
     setLoading(true);
@@ -77,13 +79,10 @@ export function AdminActivosPage() {
       }
 
       // 2. Ejecutar la eliminación
-      const { error: deleteResultError } = await supabase
-        .from('sub_activos')
-        .delete()
-        .eq('id_activo', activoToDelete.id_activo);
+      const res = await rpc('eliminar_activo', { p_id_activo: activoToDelete.id_activo });
 
-      if (deleteResultError) {
-        setDeleteError(`No se pudo eliminar el activo: ${deleteResultError.message}`);
+      if (!res.success) {
+        setDeleteError(`No se pudo eliminar el activo: ${res.error}`);
         setIsDeleting(false);
         return;
       }

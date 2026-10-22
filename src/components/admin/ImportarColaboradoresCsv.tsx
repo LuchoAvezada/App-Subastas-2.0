@@ -2,6 +2,7 @@ import { useEffect, useState, type ChangeEvent } from 'react';
 import Papa from 'papaparse';
 import { CheckCircleIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import { supabase } from '../../lib/supabase';
+import { useRpcSesion } from '../../hooks/useRpcSesion';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { Spinner } from '../ui/Spinner';
@@ -28,6 +29,7 @@ export function ImportarColaboradoresCsv({ onClose, onImportado }: Props) {
   const [resultado, setResultado] = useState<ResultadoValidacion | null>(null);
   const [importando, setImportando] = useState(false);
   const [importado, setImportado] = useState(false);
+  const rpc = useRpcSesion();
 
   // Nómina leída en el momento: tomar a un existente por nuevo le quitaría su rol o su inhabilitación.
   useEffect(() => {
@@ -75,12 +77,12 @@ export function ImportarColaboradoresCsv({ onClose, onImportado }: Props) {
     if (!resultado) return;
     setImportando(true);
     setError(null);
-    // Un solo upsert: si algo falla, la base no guarda ninguna fila.
-    const { error: dbError } = await supabase
-      .from('sub_colaboradores')
-      .upsert([...resultado.nuevos, ...resultado.actualizados], { onConflict: 'ci_documento' });
+    // Una sola sentencia en el servidor: si algo falla, la base no guarda ninguna fila.
+    const res = await rpc('importar_colaboradores', {
+      p_filas: [...resultado.nuevos, ...resultado.actualizados],
+    });
     setImportando(false);
-    if (dbError) setError(`No se importó ningún registro: ${dbError.message}`);
+    if (!res.success) setError(`No se importó ningún registro: ${res.error}`);
     else {
       setImportado(true);
       onImportado();
