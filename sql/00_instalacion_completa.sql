@@ -214,7 +214,8 @@ SELECT setval('sub_cargos_id_cargo_seq', GREATEST((SELECT MAX(id_cargo) FROM sub
 -- Roles: la app trata id_rol = 1 como administrador
 INSERT INTO sub_roles (id_rol, descripcion, inactivo, observacion) VALUES
 (1, 'Administrador', 0, 'Acceso total al sistema'),
-(2, 'Usuario', 0, 'Colaborador participante de la subasta')
+(2, 'Usuario', 0, 'Colaborador participante de la subasta'),
+(3, 'Visitante', 0, 'Solo consulta: no puede ofertar')
 ON CONFLICT (id_rol) DO NOTHING;
 SELECT setval('sub_roles_id_rol_seq', GREATEST((SELECT MAX(id_rol) FROM sub_roles), 1));
 
@@ -355,7 +356,8 @@ BEGIN
 
     RETURN json_build_object('success', true, 'message', 'Usuario registrado exitosamente.');
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, extensions, pg_temp;  -- crypt/gen_salt viven en "extensions"
 
 -- VALIDAR SESIÓN DE ADMINISTRADOR (uso interno, no expuesta por la API)
 -- Devuelve la CI del admin dueño del token, o NULL si el token no es válido,
