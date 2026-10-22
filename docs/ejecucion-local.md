@@ -12,6 +12,9 @@ Esta guía documenta los pasos para levantar el entorno de desarrollo, ejecutar 
 - **Base de Datos / Backend**: Instancia de Supabase con los esquemas y funciones de `sql/` ejecutados (`00_instalacion_completa.sql` o migraciones secuenciales).
   - Si la base ya estaba instalada, ejecuta en el editor SQL de Supabase las migraciones nuevas en orden.
   - `13_sincronizacion_config.sql` (F08) activa Realtime en `sub_app_config`, para que el temporizador de cierre se actualice al instante en todos los clientes. Es idempotente.
+  - `14_hardening_api.sql` (F09) quita a la anon key toda escritura directa y la lectura de `sub_usuarios`: desde ahí, toda escritura pasa por RPC con el token de sesión. Es idempotente.
+    - Se aplica junto con el frontend que la usa: el frontend anterior deja de poder escribir.
+    - Después, todos deben volver a iniciar sesión.
 
 > [!NOTE]
 > En entornos Windows PowerShell, si la política de scripts bloquea `npm.ps1`, utiliza el comando `npm.cmd` (ejemplo: `npm.cmd run dev`).

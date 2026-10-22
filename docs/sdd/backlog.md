@@ -17,6 +17,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 | **F06** | Procesamiento de Ganadores, Tope por Categoría y Desempate | F04 | Ninguna | Alto | Crítico | Alto | `✅ Completada` |
 | **F07** | Publicación de Resultados y Reasignación por Desistimiento | F06 | Ninguna | Medio | Alto | Medio | `✅ Completada` |
 | **F08** | Carga Masiva de Colaboradores y Configuración de Subasta | F02 | Ninguna | Bajo | Alto | Medio | `✅ Completada` |
+| **F09** | Cierre de la API Pública para Publicar en Internet | F02, F07 | Ninguna | Alto | Crítico | Medio | `🔧 Implementada, pendiente de despliegue` |
 
 ---
 
@@ -135,3 +136,16 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
     - Búsqueda sin acentos.
     - Orden por columna con `aria-sort`.
     - Antigüedad en años.
+
+---
+
+### F09: Cierre de la API Pública para Publicar en Internet (🔧 Implementada, pendiente de despliegue)
+- **Objetivo:** Que la anon key (pública, va en el JS) no permita escrituras directas ni leer datos sensibles, para publicar la app con Cloudflare Tunnel y la autenticación propia por cédula.
+- **Riesgo:** Alto. | **Valor:** Crítico. | **Esfuerzo:** Medio.
+- **Especificación:** `specs/009-hardening-api/`.
+- **Criterios de Aceptación Cumplidos:**
+  - Ninguna tabla acepta escrituras directas, y `sub_usuarios` no se lee por la API.
+  - Toda escritura pasa por RPC con el token de sesión: las de administración lo validan como admin, y las ofertas toman al colaborador del token.
+  - Solo un administrador puede adjudicar (`procesar_ganadores`).
+  - Las fotos solo se suben a rutas autorizadas por el servidor.
+- **Pendientes:** lectura de la nómina y de las ofertas con la anon key, registro de cuenta sin segundo factor y veto P9 solo en el cliente (ver `spec.md` §3).
