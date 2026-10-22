@@ -39,7 +39,7 @@
 
 ## Fase 4: Calidad y Despliegue
 - [x] **T007**: `npm.cmd run lint`, `npm.cmd test` y `npm.cmd run build` sin errores.
-- [ ] **T008**: Aplicar la migración en el NUC, publicar el build y comprobar con `curl` usando la anon key real.
+- [x] **T008**: Aplicar la migración en el NUC, publicar el build y comprobar con `curl` usando la anon key real (2026-10-22: verificación toda `false`; escrituras y `sub_usuarios` → 401; token falso → `SESION_INVALIDA`; Storage sin ruta autorizada → 403).
 - [ ] **T009**: Prueba manual de punta a punta como admin y como usuario:
   - alta y edición de colaborador, importación CSV y fecha de cierre;
   - activo con foto;

@@ -98,4 +98,4 @@ Mientras esto siga abierto, la app no se puede publicar.
 - [x] Storage rechaza subir a una ruta no autorizada.
 - [x] `src/` no contiene `.from(...).insert/update/upsert/delete`. Lo verifica `tests/sin-escrituras-directas.test.ts`.
 - [x] `npm run lint`, `npm run test` y `npm run build` pasan.
-- [ ] Migración aplicada en el NUC y `curl` de comprobación con la anon key real.
+- [x] Migración aplicada en el NUC y `curl` de comprobación con la anon key real (2026-10-22).
