@@ -27,28 +27,28 @@ export function HomePage() {
     {
       slug: 'tablets',
       title: 'Tablets',
-      description: 'Samsung, Apple, Lenovo y más',
+      description: 'Acceda para ver los ítems disponibles',
       icon: <DeviceTabletIcon className="w-7 h-7 text-agrotec-700" />,
       count: activos.filter((a) => a.id_categoria === 1 && a.estado === 'Disponible').length,
     },
     {
       slug: 'celulares',
       title: 'Celulares',
-      description: 'Equipos corporativos renovados',
+      description: 'Acceda para ver los ítems disponibles',
       icon: <DeviceMobileIcon className="w-7 h-7 text-blue-700" />,
       count: activos.filter((a) => a.id_categoria === 2 && a.estado === 'Disponible').length,
     },
     {
       slug: 'notebooks',
       title: 'Notebooks',
-      description: 'Laptops Dell, Lenovo, HP de alto rendimiento',
+      description: 'Acceda para ver los ítems disponibles',
       icon: <LaptopIcon className="w-7 h-7 text-indigo-700" />,
       count: activos.filter((a) => a.id_categoria === 3 && a.estado === 'Disponible').length,
     },
     {
       slug: 'otros',
       title: 'Otros Equipos',
-      description: 'Monitores, periféricos, audio y UPS',
+      description: 'Acceda para ver los ítems disponibles',
       icon: <DevicesIcon className="w-7 h-7 text-amber-700" />,
       count: activos.filter((a) => a.id_categoria === 4 && a.estado === 'Disponible').length,
     },
@@ -72,7 +72,7 @@ export function HomePage() {
               Bienvenido, {usuario?.nombre.split(' ')[0]}
             </h1>
             <p className="mt-3 text-sm sm:text-base text-agrotec-100 leading-relaxed">
-              Participe de la subasta de activos tecnológicos. Explore los catálogos de equipos y registre sus ofertas antes del cierre oficial.
+              Participe de la subasta de activos tecnológicos. Explore los catálogos de equipos y registre sus ofertas antes del cierre.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">

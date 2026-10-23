@@ -60,7 +60,7 @@ export function LoginPage() {
             Acceso para Colaboradores
           </h2>
           <p className="mt-1 text-sm text-[#6D6D6D]">
-            Venta y adjudicación de activos informáticos
+            Subasta de Activos de Informática
           </p>
         </div>
       </div>
