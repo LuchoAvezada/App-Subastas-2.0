@@ -298,6 +298,13 @@ JOIN sub_activos a ON r.id_activo = a.id_activo
 JOIN sub_categorias cat ON a.id_categoria = cat.id_categoria
 LEFT JOIN sub_colaboradores c ON r.id_colaborador_ganador = c.id_colaborador;
 
+-- F10: monto líder y cantidad de ofertas por activo, sin postor (P9).
+-- Es la única vista legible con la anon key; las demás se leen con leer_datos().
+CREATE OR REPLACE VIEW sub_v_resumen_ofertas AS
+SELECT id_activo, COUNT(*)::int AS total_ofertas, MAX(monto) AS monto_lider
+FROM sub_ofertas
+GROUP BY id_activo;
+
 -- ═══════════════════════════════════════════════════════════
 -- 9. FUNCIONES RPC
 -- ═══════════════════════════════════════════════════════════
@@ -1289,6 +1296,61 @@ AS $$
     SELECT EXISTS (SELECT 1 FROM sub_subidas_autorizadas WHERE ruta = p_ruta AND expira > NOW());
 $$;
 
+-- F10: lecturas que exigen sesión (la anon key solo lee el catálogo)
+--   'mis_ofertas'                        → cualquier sesión, solo las propias
+--   'resultados'                         → admin siempre; el resto si están publicados
+--   'ofertas', 'colaboradores', 'nomina' → solo admin
+CREATE OR REPLACE FUNCTION leer_datos(p_token TEXT, p_consulta TEXT) RETURNS JSON
+LANGUAGE plpgsql STABLE SECURITY DEFINER
+SET search_path = public, extensions, pg_temp
+AS $$
+DECLARE
+    v_id_colaborador INTEGER := validar_sesion(p_token);
+    v_es_admin       BOOLEAN := validar_sesion_admin(p_token) IS NOT NULL;
+    v_filas          JSON;
+BEGIN
+    IF v_id_colaborador IS NULL THEN
+        RETURN respuesta_sesion_invalida();
+    END IF;
+
+    IF p_consulta = 'mis_ofertas' THEN
+        SELECT json_agg(o ORDER BY o.fecha_hora DESC) INTO v_filas
+        FROM sub_v_ofertas_recibidas o
+        WHERE o.id_colaborador = v_id_colaborador;
+
+    ELSIF p_consulta = 'resultados' THEN
+        IF NOT v_es_admin
+           AND NOT COALESCE((SELECT resultados_publicados FROM sub_app_config WHERE id = 1), false) THEN
+            RETURN json_build_object('success', false, 'error', 'Los resultados todavía no fueron publicados.');
+        END IF;
+        SELECT json_agg(r ORDER BY r.id_resultado) INTO v_filas
+        FROM sub_v_resultados_detalle r;
+
+    -- De acá en adelante, solo administración
+    ELSIF NOT v_es_admin THEN
+        RETURN respuesta_sesion_invalida();
+
+    ELSIF p_consulta = 'ofertas' THEN
+        SELECT json_agg(o ORDER BY o.id_activo, o.monto DESC, o.nivel_jerarquia, o.fecha_hora) INTO v_filas
+        FROM sub_v_ofertas_recibidas o;
+
+    ELSIF p_consulta = 'colaboradores' THEN
+        SELECT json_agg(c ORDER BY c.id_colaborador) INTO v_filas
+        FROM sub_v_datos_colaborador c;
+
+    ELSIF p_consulta = 'nomina' THEN
+        SELECT json_agg(n) INTO v_filas
+        FROM (SELECT id_colaborador, ci_documento, nombre, fecha_ingreso, habilitado, id_cargo, id_rol
+              FROM sub_colaboradores) n;
+
+    ELSE
+        RETURN json_build_object('success', false, 'error', 'Consulta desconocida.');
+    END IF;
+
+    RETURN json_build_object('success', true, 'filas', COALESCE(v_filas, '[]'::json));
+END;
+$$;
+
 -- ═══════════════════════════════════════════════════════════
 -- 10. PERMISOS
 --     Las escrituras sensibles solo pasan por funciones SECURITY DEFINER,
@@ -1309,6 +1371,12 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE INSERT, UPDATE, DELETE, TRUNCAT
 -- y no expone password_hash.
 REVOKE ALL ON sub_usuarios, sub_intentos_login, sub_subidas_autorizadas FROM PUBLIC, anon, authenticated;
 
+-- F10: la API solo lee el catálogo; nómina, ofertas con postor y resultados van por leer_datos().
+-- Las tablas nuevas tampoco nacen legibles: hay que darles GRANT SELECT a propósito.
+REVOKE SELECT ON ALL TABLES IN SCHEMA public FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON sub_activos, sub_app_config, sub_cargos, sub_v_resumen_ofertas TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE SELECT ON TABLES FROM anon, authenticated;
+
 -- Adjudicar borra y recalcula resultados: solo vía procesar_ganadores(p_token)
 REVOKE EXECUTE ON FUNCTION procesar_ganadores() FROM PUBLIC, anon, authenticated;
 
@@ -1324,6 +1392,7 @@ GRANT EXECUTE ON FUNCTION guardar_activo(TEXT, INTEGER, INTEGER, TEXT, TEXT, TEX
 GRANT EXECUTE ON FUNCTION eliminar_activo(TEXT, INTEGER) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION autorizar_subida_foto(TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION subida_autorizada(TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION leer_datos(TEXT, TEXT) TO anon, authenticated;
 
 -- ═══════════════════════════════════════════════════════════
 -- 11. STORAGE — bucket público para fotos de activos
@@ -1367,7 +1436,7 @@ END $$;
 
 -- ═══════════════════════════════════════════════════════════
 -- 13. REGISTRO DE MIGRACIONES — esta instalación ya incluye
---     todo hasta 15; los scripts nuevos se registran al aplicarse
+--     todo hasta 16; los scripts nuevos se registran al aplicarse
 -- ═══════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS sub_migraciones (
@@ -1380,7 +1449,8 @@ REVOKE ALL ON sub_migraciones FROM PUBLIC, anon, authenticated;
 INSERT INTO sub_migraciones (archivo) VALUES
 ('00_instalacion_completa.sql'),
 ('14_hardening_api.sql'),
-('15_registro_migraciones.sql')
+('15_registro_migraciones.sql'),
+('16_lecturas_con_sesion.sql')
 ON CONFLICT (archivo) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════

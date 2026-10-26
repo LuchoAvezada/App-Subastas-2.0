@@ -16,6 +16,8 @@ Esta guía documenta los pasos para levantar el entorno de desarrollo, ejecutar 
     - Se aplica junto con el frontend que la usa: el frontend anterior deja de poder escribir.
     - Después, todos deben volver a iniciar sesión.
   - `15_registro_migraciones.sql` crea `sub_migraciones`. Desde ahí, cada script nuevo termina insertando su nombre en esa tabla, y `SELECT * FROM sub_migraciones` muestra qué tiene aplicado cada base.
+  - `16_lecturas_con_sesion.sql` (F10) deja a la anon key leyendo solo el catálogo. Nómina, ofertas con postor y resultados se leen con `leer_datos(p_token, ...)`. También pasa las fotos guardadas con la IP del servidor a ruta relativa. Es transaccional e idempotente.
+    - Se aplica junto con el frontend que la usa: el anterior deja de ver ofertas, colaboradores y resultados.
   - `scripts/huella_esquema.sql` resume funciones, tablas, vistas, permisos de `anon` y políticas en una fila con hash por elemento. Si la huella del servidor coincide con la de una instalación limpia del repo, el esquema es el mismo.
 
 ## Publicación en el servidor on-prem (NUC)
@@ -23,6 +25,9 @@ Esta guía documenta los pasos para levantar el entorno de desarrollo, ejecutar 
 - **Frontend:** desde la raíz del repo, en `main` y sin cambios sin commitear, ejecuta `.\scripts\deploy.ps1`.
   - El script se niega a publicar si hay algo sin commitear: así lo que corre en el NUC siempre es un commit de git.
   - Deja el commit publicado en `http://20.20.20.77/version.txt`.
+  - En producción la app usa como API el mismo origen desde el que se abre, así que el build funciona por la LAN y por el túnel público (`https://sp009.taildad9ad.ts.net`). `.env.production.local` solo necesita `VITE_SUPABASE_ANON_KEY`.
+- **Internet:** Tailscale Funnel publica el puerto 80 del NUC (`sudo tailscale funnel --bg 80`; se apaga con `sudo tailscale funnel --https=443 off`).
+- **Límite de login por IP:** `scripts/nginx-limite-login.conf` va en `/etc/nginx/conf.d/` (instrucciones en el archivo).
 - **Base de datos:** las migraciones no las aplica el script. Se aplican a mano en el NUC, de a una y en orden:
   ```bash
   docker exec -i supabase-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < NN_archivo.sql

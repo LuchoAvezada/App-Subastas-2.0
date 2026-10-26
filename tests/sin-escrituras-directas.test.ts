@@ -27,3 +27,20 @@ describe('F09 — sin escrituras directas a tablas', () => {
     expect(hallazgos).toEqual([]);
   });
 });
+
+// F10: la anon key solo lee el catálogo (sql/16_lecturas_con_sesion.sql). Leer otra tabla
+// con .from() fallaría en producción: nómina, ofertas y resultados van por leer_datos().
+// 'activos' es el bucket de Storage (supabase.storage.from).
+const LEGIBLES = ['sub_activos', 'sub_app_config', 'sub_cargos', 'sub_v_resumen_ofertas', 'activos'];
+
+describe('F10 — solo lecturas públicas del catálogo', () => {
+  it('src/ solo usa .from(...) sobre tablas legibles por la anon key', () => {
+    const hallazgos = archivosDe('src').flatMap((archivo) =>
+      [...readFileSync(archivo, 'utf-8').matchAll(/\.from\(\s*['"`](\w+)['"`]/g)]
+        .map((m) => m[1])
+        .filter((tabla) => !LEGIBLES.includes(tabla))
+        .map((tabla) => `${archivo}: ${tabla}`)
+    );
+    expect(hallazgos).toEqual([]);
+  });
+});

@@ -17,7 +17,8 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 | **F06** | Procesamiento de Ganadores, Tope por Categoría y Desempate | F04 | Ninguna | Alto | Crítico | Alto | `✅ Completada` |
 | **F07** | Publicación de Resultados y Reasignación por Desistimiento | F06 | Ninguna | Medio | Alto | Medio | `✅ Completada` |
 | **F08** | Carga Masiva de Colaboradores y Configuración de Subasta | F02 | Ninguna | Bajo | Alto | Medio | `✅ Completada` |
-| **F09** | Cierre de la API Pública para Publicar en Internet | F02, F07 | Ninguna | Alto | Crítico | Medio | `🔧 Implementada, pendiente de despliegue` |
+| **F09** | Cierre de la API Pública para Publicar en Internet | F02, F07 | Ninguna | Alto | Crítico | Medio | `✅ Completada` |
+| **F10** | Lecturas con Sesión y Publicación por Túnel | F09 | Ninguna | Alto | Crítico | Medio | `🔧 Implementada, pendiente de despliegue` |
 
 ---
 
@@ -148,4 +149,16 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
   - Toda escritura pasa por RPC con el token de sesión: las de administración lo validan como admin, y las ofertas toman al colaborador del token.
   - Solo un administrador puede adjudicar (`procesar_ganadores`).
   - Las fotos solo se suben a rutas autorizadas por el servidor.
-- **Pendientes:** lectura de la nómina y de las ofertas con la anon key, registro de cuenta sin segundo factor y veto P9 solo en el cliente (ver `spec.md` §3).
+- **Pendientes:** lectura de la nómina y de las ofertas con la anon key (resuelto en F10), registro de cuenta sin segundo factor y veto P9 solo en el cliente (ver `spec.md` §3).
+
+---
+
+### F10: Lecturas con Sesión y Publicación por Túnel (🔧 Implementada, pendiente de despliegue)
+- **Objetivo:** Publicar la app en internet con Tailscale Funnel (gratis, sin TI) sin exponer la nómina, las ofertas con postor ni los resultados antes de tiempo.
+- **Riesgo:** Alto. | **Valor:** Crítico. | **Esfuerzo:** Medio.
+- **Especificación:** `specs/010-lecturas-con-sesion/`.
+- **Criterios de Aceptación:**
+  - La anon key solo lee el catálogo; el resto se lee con `leer_datos(p_token, ...)`.
+  - El mismo build funciona por la IP de la LAN y por el túnel, con fotos de ruta relativa.
+  - Nginx limita el login y el registro por IP.
+- **Pendientes:** registro de cuenta sin segundo factor y veto P9 solo en el cliente.

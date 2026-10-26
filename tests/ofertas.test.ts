@@ -3,29 +3,22 @@ import { formatUSD } from '../src/lib/utils';
 import { ROL, puedeOfertar, type Usuario } from '../src/types/domain';
 import {
   calcularResumenOfertas,
-  type OfertaPublicaRaw,
+  type ResumenOfertaRaw,
 } from '../src/hooks/useResumenOfertas';
 
 describe('Catálogo de Activos y Visibilidad de Ofertas — F04', () => {
-  describe('Cálculo Anónimo de Monto Líder y Conteo de Ofertas', () => {
-    it('calcula correctamente el monto líder y cantidad de ofertas para múltiples activos', () => {
-      const ofertasMuestra: OfertaPublicaRaw[] = [
-        { id_activo: 1, monto: 120 },
-        { id_activo: 1, monto: 150 },
-        { id_activo: 1, monto: 140 },
-        { id_activo: 2, monto: 300 },
-        { id_activo: 2, monto: 350 },
+  // El conteo y el máximo los calcula la vista sub_v_resumen_ofertas (F10); el cliente solo los indexa
+  describe('Resumen Anónimo de Monto Líder y Conteo de Ofertas', () => {
+    it('indexa el monto líder y la cantidad de ofertas por activo', () => {
+      const filas: ResumenOfertaRaw[] = [
+        { id_activo: 1, total_ofertas: 3, monto_lider: 150 },
+        { id_activo: 2, total_ofertas: 2, monto_lider: 350 },
       ];
 
-      const resumen = calcularResumenOfertas(ofertasMuestra);
+      const resumen = calcularResumenOfertas(filas);
 
-      expect(resumen[1]).toBeDefined();
-      expect(resumen[1].totalOfertas).toBe(3);
-      expect(resumen[1].montoLider).toBe(150);
-
-      expect(resumen[2]).toBeDefined();
-      expect(resumen[2].totalOfertas).toBe(2);
-      expect(resumen[2].montoLider).toBe(350);
+      expect(resumen[1]).toEqual({ totalOfertas: 3, montoLider: 150 });
+      expect(resumen[2]).toEqual({ totalOfertas: 2, montoLider: 350 });
     });
 
     it('devuelve valores por defecto (0 ofertas y $0.00 líder) cuando un activo no tiene ofertas', () => {
@@ -38,8 +31,7 @@ describe('Catálogo de Activos y Visibilidad de Ofertas — F04', () => {
     });
 
     it('no contiene ningún campo personal o identificador de colaborador (Principio P9)', () => {
-      const ofertasMuestra: OfertaPublicaRaw[] = [{ id_activo: 5, monto: 200 }];
-      const resumen = calcularResumenOfertas(ofertasMuestra);
+      const resumen = calcularResumenOfertas([{ id_activo: 5, total_ofertas: 1, monto_lider: 200 }]);
 
       const item = resumen[5];
       expect(item).not.toHaveProperty('nombre');
@@ -48,15 +40,9 @@ describe('Catálogo de Activos y Visibilidad de Ofertas — F04', () => {
     });
 
     it('maneja correctamente montos numéricos recibidos como strings (compatibilidad API)', () => {
-      const ofertasRaw = [
-        { id_activo: 9, monto: '400.00' },
-        { id_activo: 9, monto: '350.50' },
-      ];
-      const resumen = calcularResumenOfertas(ofertasRaw as unknown as OfertaPublicaRaw[]);
+      const resumen = calcularResumenOfertas([{ id_activo: 9, total_ofertas: '2', monto_lider: '400.00' }]);
 
-      expect(resumen[9]).toBeDefined();
-      expect(resumen[9].totalOfertas).toBe(2);
-      expect(resumen[9].montoLider).toBe(400);
+      expect(resumen[9]).toEqual({ totalOfertas: 2, montoLider: 400 });
       expect(formatUSD(resumen[9].montoLider)).toBe('$400.00');
     });
   });

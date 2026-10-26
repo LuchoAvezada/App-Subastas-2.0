@@ -65,12 +65,14 @@ export function AdminActivosPage() {
 
     try {
       // 1. Validar si ya existen ofertas para evitar errores de clave foránea y guiar al usuario
-      const { count, error: countError } = await supabase
-        .from('sub_ofertas')
-        .select('*', { count: 'exact', head: true })
-        .eq('id_activo', activoToDelete.id_activo);
+      const { data: resumen } = await supabase
+        .from('sub_v_resumen_ofertas')
+        .select('total_ofertas')
+        .eq('id_activo', activoToDelete.id_activo)
+        .maybeSingle();
+      const count = resumen?.total_ofertas ?? 0;
 
-      if (!countError && count && count > 0) {
+      if (count > 0) {
         setDeleteError(
           `No se puede eliminar el activo #${activoToDelete.id_activo} porque ya cuenta con ${count} oferta(s) registrada(s). Para darlo de baja, puede cambiar su estado a 'Cerrado' o 'Adjudicado'.`
         );

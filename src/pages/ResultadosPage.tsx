@@ -8,6 +8,7 @@ import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../components/ui/Toast';
 import { useAuth } from '../hooks/useAuth';
+import { useRpcSesion } from '../hooks/useRpcSesion';
 import { useCountdown } from '../hooks/useCountdown';
 import { puedeVerResultados, generarReporteGanadores } from '../lib/desistimiento';
 import {
@@ -22,12 +23,14 @@ import {
   WarningIcon,
 } from '@phosphor-icons/react';
 import type { ResultadoDetalle } from '../types/domain';
+import type { ColaboradorInput } from '../lib/adjudicacion';
 import Papa from 'papaparse';
 
 export function ResultadosPage() {
   const { usuario, logout } = useAuth();
   const countdown = useCountdown();
   const toast = useToast();
+  const rpc = useRpcSesion();
 
   const [resultados, setResultados] = useState<ResultadoDetalle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,20 +45,18 @@ export function ResultadosPage() {
   const fetchResultados = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('sub_v_resultados_detalle')
-        .select('*')
-        .order('id_resultado', { ascending: true });
+      // El servidor los entrega al admin siempre y al resto solo si están publicados (F10)
+      const res = await rpc<{ filas: ResultadoDetalle[] }>('leer_datos', { p_consulta: 'resultados' });
 
-      if (!error) {
-        setResultados((data as ResultadoDetalle[]) || []);
+      if (res.success) {
+        setResultados(res.filas ?? []);
       }
     } catch (err) {
       console.error('Error al cargar resultados:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [rpc]);
 
   useEffect(() => {
     fetchResultados();
@@ -97,14 +98,15 @@ export function ResultadosPage() {
   const handleDescargarReporteGanadores = async () => {
     try {
       // Obtener datos maestros para cruzar niveles jerárquicos
-      const [{ data: colabs }, { data: cargos }] = await Promise.all([
-        supabase.from('sub_colaboradores').select('id_colaborador, id_cargo, fecha_ingreso'),
+      const [nomina, { data: cargos }] = await Promise.all([
+        rpc<{ filas: ColaboradorInput[] }>('leer_datos', { p_consulta: 'nomina' }),
         supabase.from('sub_cargos').select('id_cargo, nivel_jerarquia'),
       ]);
+      if (!nomina.success) throw new Error(nomina.error);
 
       const reporte = generarReporteGanadores(
         resultados,
-        (colabs as any) || [],
+        nomina.filas ?? [],
         (cargos as any) || []
       );
 

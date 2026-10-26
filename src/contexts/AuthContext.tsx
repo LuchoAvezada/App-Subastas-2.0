@@ -3,6 +3,9 @@ import { supabase } from '../lib/supabase';
 import type { Usuario } from '../types/domain';
 import { AuthContext, STORAGE_KEY } from './auth-context-definition';
 
+// Nginx limita los intentos por IP (scripts/nginx-limite-login.conf) y responde 429
+const DEMASIADOS_INTENTOS = 'Demasiados intentos desde esta conexión. Espere un minuto e intente de nuevo.';
+
 function getInitialUser(): Usuario | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -24,11 +27,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (ci: string, password: string) => {
     try {
-      const { data, error } = await supabase.rpc('autenticar_usuario', {
+      const { data, error, status } = await supabase.rpc('autenticar_usuario', {
         p_ci_documento: ci.trim(),
         p_password: password,
       });
 
+      if (status === 429) return { success: false, error: DEMASIADOS_INTENTOS };
       if (error) {
         console.error('Login RPC error:', error);
         return { success: false, error: 'Error de conexión con el servidor.' };
@@ -67,11 +71,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registrar = useCallback(async (ci: string, password: string) => {
     try {
-      const { data, error } = await supabase.rpc('registrar_nuevo_usuario', {
+      const { data, error, status } = await supabase.rpc('registrar_nuevo_usuario', {
         p_ci_documento: ci.trim(),
         p_password: password,
       });
 
+      if (status === 429) return { success: false, error: DEMASIADOS_INTENTOS };
       if (error) {
         console.error('Register RPC error:', error);
         return { success: false, error: 'Error de conexión con el servidor.' };

@@ -28,7 +28,8 @@ if ($rama -ne 'main' -and -not $PermitirOtraRama) {
 }
 
 if (-not (Test-Path .env.production.local)) {
-    Write-Host "Falta .env.production.local (VITE_SUPABASE_URL=http://20.20.20.77 y la anon key)." -ForegroundColor Red
+    # La URL de la API sale del navegador (F10): el archivo solo necesita la anon key
+    Write-Host "Falta .env.production.local (VITE_SUPABASE_ANON_KEY)." -ForegroundColor Red
     exit 1
 }
 

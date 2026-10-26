@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
-export interface OfertaPublicaRaw {
+/** Fila de sub_v_resumen_ofertas: una por activo, sin postor (P9). */
+export interface ResumenOfertaRaw {
   id_activo: number;
-  monto: number;
+  total_ofertas: number;
+  monto_lider: number;
 }
 
 export interface EstadisticaActivo {
@@ -12,24 +14,17 @@ export interface EstadisticaActivo {
 }
 
 export function calcularResumenOfertas(
-  ofertas: Array<{ id_activo: number; monto: number | string }>
+  filas: Array<{ id_activo: number; total_ofertas: number | string; monto_lider: number | string }>
 ): Record<number, EstadisticaActivo> {
   const map: Record<number, EstadisticaActivo> = {};
 
-  for (const row of ofertas) {
+  for (const row of filas) {
     const idActivo = Number(row.id_activo);
-    const monto = Number(row.monto);
+    const montoLider = Number(row.monto_lider);
+    const totalOfertas = Number(row.total_ofertas);
 
-    if (isNaN(idActivo) || isNaN(monto)) continue;
-
-    if (!map[idActivo]) {
-      map[idActivo] = { montoLider: monto, totalOfertas: 1 };
-    } else {
-      map[idActivo].totalOfertas += 1;
-      if (monto > map[idActivo].montoLider) {
-        map[idActivo].montoLider = monto;
-      }
-    }
+    if (isNaN(idActivo) || isNaN(montoLider) || isNaN(totalOfertas)) continue;
+    map[idActivo] = { montoLider, totalOfertas };
   }
 
   return map;
@@ -41,22 +36,10 @@ export function useResumenOfertas() {
 
   const fetchResumen = useCallback(async () => {
     try {
-      // Consultamos sub_v_ofertas_recibidas que tiene permisos accesibles para roles del sistema
-      // Principio P9: Solo seleccionamos id_activo y monto, garantizando anonimato absoluto
-      let { data, error } = await supabase
-        .from('sub_v_ofertas_recibidas')
-        .select('id_activo, monto');
-
-      // Fallback por si la vista no estuviese disponible
-      if (error || !data) {
-        const fallbackRes = await supabase
-          .from('sub_ofertas')
-          .select('id_activo, monto');
-        if (!fallbackRes.error && fallbackRes.data) {
-          data = fallbackRes.data;
-          error = null;
-        }
-      }
+      // Principio P9: la vista pública solo trae cantidad y monto líder por activo (F10)
+      const { data, error } = await supabase
+        .from('sub_v_resumen_ofertas')
+        .select('id_activo, total_ofertas, monto_lider');
 
       if (!error && data) {
         const mapaCalculado = calcularResumenOfertas(data);

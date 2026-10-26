@@ -32,24 +32,20 @@ export function ImportarColaboradoresCsv({ onClose, onImportado }: Props) {
   const rpc = useRpcSesion();
 
   // Nómina leída en el momento: tomar a un existente por nuevo le quitaría su rol o su inhabilitación.
+  // leer_datos la devuelve completa en un solo JSON, sin el tope de filas de la API (F10).
   useEffect(() => {
     Promise.all([
       supabase.from('sub_cargos').select('id_cargo, descripcion, nivel_jerarquia').order('id_cargo'),
-      supabase
-        .from('sub_colaboradores')
-        .select('ci_documento, nombre, fecha_ingreso, habilitado, id_cargo, id_rol', { count: 'exact' }),
+      rpc<{ filas: ColaboradorExistente[] }>('leer_datos', { p_consulta: 'nomina' }),
     ]).then(([cargosRes, nominaRes]) => {
-      const fallo = cargosRes.error ?? nominaRes.error;
-      const nomina = (nominaRes.data ?? []) as ColaboradorExistente[];
-      if (fallo) setError(`No se pudo leer la nómina actual: ${fallo.message}`);
-      else if ((nominaRes.count ?? 0) > nomina.length)
-        setError('La nómina actual se leyó incompleta, así que importar ahora podría pisar datos.');
+      if (cargosRes.error || !nominaRes.success)
+        setError(`No se pudo leer la nómina actual: ${cargosRes.error?.message ?? nominaRes.error ?? 'error desconocido'}`);
       else {
         setCargos((cargosRes.data ?? []) as Cargo[]);
-        setExistentes(nomina);
+        setExistentes(nominaRes.filas ?? []);
       }
     });
-  }, []);
+  }, [rpc]);
 
   const handleArchivo = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

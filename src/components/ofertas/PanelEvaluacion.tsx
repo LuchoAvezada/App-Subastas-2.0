@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../../lib/supabase';
 import { formatUSD } from '../../lib/utils';
 import { Button } from '../ui/Button';
 import { Spinner } from '../ui/Spinner';
@@ -33,16 +32,11 @@ export function PanelEvaluacion() {
   const fetchOfertas = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('sub_v_ofertas_recibidas')
-        .select('*')
-        .order('id_activo', { ascending: true })
-        .order('monto', { ascending: false })
-        .order('nivel_jerarquia', { ascending: true })
-        .order('fecha_hora', { ascending: true });
+      // Ordenadas por activo, monto, jerarquía y fecha en el servidor (F10: solo admin)
+      const res = await rpc<{ filas: OfertaRecibida[] }>('leer_datos', { p_consulta: 'ofertas' });
 
-      if (!error) {
-        const fetched = (data as OfertaRecibida[]) || [];
+      if (res.success) {
+        const fetched = res.filas ?? [];
         setOfertas(fetched);
         if (fetched.length > 0 && selectedActivoId === null) {
           setSelectedActivoId(fetched[0].id_activo);
@@ -53,7 +47,7 @@ export function PanelEvaluacion() {
     } finally {
       setLoading(false);
     }
-  }, [selectedActivoId]);
+  }, [selectedActivoId, rpc]);
 
   useEffect(() => {
     fetchOfertas();

@@ -93,7 +93,8 @@ export function ActivoForm({ activoToEdit, onSuccess, onCancel }: ActivoFormProp
           .from('activos')
           .upload(permiso.ruta, fotoBlob, { contentType: fotoBlob.type });
         if (uploadError) throw uploadError;
-        urlFinal = supabase.storage.from('activos').getPublicUrl(permiso.ruta).data.publicUrl;
+        // Ruta relativa (/storage/...): sirve igual por la IP de la LAN y por el túnel
+        urlFinal = new URL(supabase.storage.from('activos').getPublicUrl(permiso.ruta).data.publicUrl).pathname;
       }
 
       const res = await rpc('guardar_activo', {

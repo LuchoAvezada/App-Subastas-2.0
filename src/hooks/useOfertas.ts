@@ -22,16 +22,13 @@ export function useOfertas() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: fetchError } = await supabase
-        .from('sub_v_ofertas_recibidas')
-        .select('*')
-        .eq('id_colaborador', usuario.id_colaborador)
-        .order('fecha_hora', { ascending: false });
+      // El servidor devuelve solo las ofertas del dueño del token (F10)
+      const res = await rpc<{ filas: OfertaRecibida[] }>('leer_datos', { p_consulta: 'mis_ofertas' });
 
-      if (fetchError) {
-        setError(fetchError.message);
+      if (!res.success) {
+        setError(res.error || 'Error al cargar ofertas');
       } else {
-        const rawOfertas = (data as OfertaRecibida[]) || [];
+        const rawOfertas = res.filas ?? [];
         // Excluir ofertas de activos en los que el usuario ya registra un veto de cancelación
         const ofertasVigentes = rawOfertas.filter(
           (o) => !hasVetoColaborador(usuario.id_colaborador, o.id_activo)
@@ -43,7 +40,7 @@ export function useOfertas() {
     } finally {
       setLoading(false);
     }
-  }, [usuario]);
+  }, [usuario, rpc]);
 
   useEffect(() => {
     fetchMisOfertas();

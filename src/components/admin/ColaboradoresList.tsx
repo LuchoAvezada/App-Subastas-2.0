@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { differenceInYears, parseISO } from 'date-fns';
-import { supabase } from '../../lib/supabase';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Spinner } from '../ui/Spinner';
@@ -106,22 +105,19 @@ export function ColaboradoresList() {
   const fetchColaboradores = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('sub_v_datos_colaborador')
-        .select('*')
-        .order('id_colaborador', { ascending: true });
+      const res = await rpc<{ filas: DatosColaborador[] }>('leer_datos', { p_consulta: 'colaboradores' });
 
-      if (error) setLoadError(error.message);
+      if (!res.success) setLoadError(res.error || 'Error cargando colaboradores');
       else {
         setLoadError(null);
-        setColaboradores((data as DatosColaborador[]) || []);
+        setColaboradores(res.filas ?? []);
       }
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Error cargando colaboradores');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [rpc]);
 
   useEffect(() => {
     fetchColaboradores();
