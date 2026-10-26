@@ -246,7 +246,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION procesar_ganadores() RETURNS JSON AS $$
 BEGIN
     -- Limpiar resultados anteriores
-    DELETE FROM sub_resultados;
+    DELETE FROM sub_resultados WHERE true;
     
     -- Ejecutar algoritmo con CTEs
     WITH datos_base AS (

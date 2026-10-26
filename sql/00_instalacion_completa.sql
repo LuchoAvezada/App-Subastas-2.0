@@ -484,7 +484,8 @@ DECLARE
     v_segundo RECORD;
     v_criterio VARCHAR(100);
 BEGIN
-    DELETE FROM sub_resultados;
+    -- WHERE true: pg-safeupdate (Supabase) rechaza DELETE sin WHERE en la API (migración 18)
+    DELETE FROM sub_resultados WHERE true;
 
     CREATE TEMP TABLE temp_ofertas_eval_orig ON COMMIT DROP AS
     SELECT 
@@ -1445,7 +1446,7 @@ END $$;
 
 -- ═══════════════════════════════════════════════════════════
 -- 13. REGISTRO DE MIGRACIONES — esta instalación ya incluye
---     todo hasta 17; los scripts nuevos se registran al aplicarse
+--     todo hasta 18; los scripts nuevos se registran al aplicarse
 -- ═══════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS sub_migraciones (
@@ -1460,7 +1461,8 @@ INSERT INTO sub_migraciones (archivo) VALUES
 ('14_hardening_api.sql'),
 ('15_registro_migraciones.sql'),
 ('16_lecturas_con_sesion.sql'),
-('17_login_rapido.sql')
+('17_login_rapido.sql'),
+('18_procesar_ganadores_where.sql')
 ON CONFLICT (archivo) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════

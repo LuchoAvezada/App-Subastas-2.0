@@ -19,6 +19,7 @@ Esta guía documenta los pasos para levantar el entorno de desarrollo, ejecutar 
   - `16_lecturas_con_sesion.sql` (F10) deja a la anon key leyendo solo el catálogo. Nómina, ofertas con postor y resultados se leen con `leer_datos(p_token, ...)`. También pasa las fotos guardadas con la IP del servidor a ruta relativa. Es transaccional e idempotente.
     - Se aplica junto con el frontend que la usa: el anterior deja de ver ofertas, colaboradores y resultados.
   - `17_login_rapido.sql` corrige `autenticar_usuario`: calculaba bcrypt para cada cuenta registrada y el login superaba el `statement_timeout` (500, código 57014). Solo reemplaza la función.
+  - `18_procesar_ganadores_where.sql` corrige "DELETE requires a WHERE clause" al procesar ganadores: Supabase rechaza DELETE/UPDATE sin WHERE en la API, incluso dentro de funciones. Toda sentencia nueva de ese tipo debe llevar WHERE.
   - `scripts/huella_esquema.sql` resume funciones, tablas, vistas, permisos de `anon` y políticas en una fila con hash por elemento. Si la huella del servidor coincide con la de una instalación limpia del repo, el esquema es el mismo.
 
 ## Publicación en el servidor on-prem (NUC)
