@@ -18,6 +18,7 @@ Esta guía documenta los pasos para levantar el entorno de desarrollo, ejecutar 
   - `15_registro_migraciones.sql` crea `sub_migraciones`. Desde ahí, cada script nuevo termina insertando su nombre en esa tabla, y `SELECT * FROM sub_migraciones` muestra qué tiene aplicado cada base.
   - `16_lecturas_con_sesion.sql` (F10) deja a la anon key leyendo solo el catálogo. Nómina, ofertas con postor y resultados se leen con `leer_datos(p_token, ...)`. También pasa las fotos guardadas con la IP del servidor a ruta relativa. Es transaccional e idempotente.
     - Se aplica junto con el frontend que la usa: el anterior deja de ver ofertas, colaboradores y resultados.
+  - `17_login_rapido.sql` corrige `autenticar_usuario`: calculaba bcrypt para cada cuenta registrada y el login superaba el `statement_timeout` (500, código 57014). Solo reemplaza la función.
   - `scripts/huella_esquema.sql` resume funciones, tablas, vistas, permisos de `anon` y políticas en una fila con hash por elemento. Si la huella del servidor coincide con la de una instalación limpia del repo, el esquema es el mismo.
 
 ## Publicación en el servidor on-prem (NUC)

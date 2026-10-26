@@ -398,6 +398,7 @@ AS $$
 DECLARE
     v_intentos_fallidos INTEGER;
     v_id_usuario INTEGER;
+    v_hash TEXT;
     v_token TEXT;
 BEGIN
     SELECT COUNT(*) INTO v_intentos_fallidos
@@ -413,14 +414,22 @@ BEGIN
             'error', 'Demasiados intentos fallidos. Su cuenta está bloqueada temporalmente por 15 minutos.');
     END IF;
 
-    SELECT u.id_usuario INTO v_id_usuario
+    -- Primero se busca la cuenta por cédula y recién después se calcula un solo bcrypt.
+    -- Con crypt() en el WHERE, Postgres lo evaluaba en cada fila de sub_usuarios y el
+    -- login superaba el statement_timeout de anon apenas se registraron varias cuentas.
+    SELECT u.id_usuario, u.password_hash INTO v_id_usuario, v_hash
     FROM sub_usuarios u
     JOIN sub_colaboradores c ON u.id_colaborador = c.id_colaborador
     WHERE c.ci_documento = p_ci_documento
-      AND u.password_hash = crypt(p_password, u.password_hash)
       AND c.habilitado = 'SI'
       AND u.situacion = 'A'
     LIMIT 1;
+
+    -- Sin cuenta se calcula igual un bcrypt (con sal nueva): el tiempo de respuesta
+    -- no revela qué cédulas tienen cuenta.
+    IF v_hash IS DISTINCT FROM crypt(p_password, COALESCE(v_hash, gen_salt('bf', 10))) THEN
+        v_id_usuario := NULL;
+    END IF;
 
     INSERT INTO sub_intentos_login (usuario, exitoso, ip_origen)
     VALUES (p_ci_documento, CASE WHEN v_id_usuario IS NULL THEN 'N' ELSE 'S' END, p_ip);
@@ -1436,7 +1445,7 @@ END $$;
 
 -- ═══════════════════════════════════════════════════════════
 -- 13. REGISTRO DE MIGRACIONES — esta instalación ya incluye
---     todo hasta 16; los scripts nuevos se registran al aplicarse
+--     todo hasta 17; los scripts nuevos se registran al aplicarse
 -- ═══════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS sub_migraciones (
@@ -1450,7 +1459,8 @@ INSERT INTO sub_migraciones (archivo) VALUES
 ('00_instalacion_completa.sql'),
 ('14_hardening_api.sql'),
 ('15_registro_migraciones.sql'),
-('16_lecturas_con_sesion.sql')
+('16_lecturas_con_sesion.sql'),
+('17_login_rapido.sql')
 ON CONFLICT (archivo) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════
