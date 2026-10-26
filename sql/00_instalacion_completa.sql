@@ -484,8 +484,11 @@ DECLARE
     v_segundo RECORD;
     v_criterio VARCHAR(100);
 BEGIN
-    -- WHERE true: pg-safeupdate (Supabase) rechaza DELETE sin WHERE en la API (migración 18)
-    DELETE FROM sub_resultados WHERE true;
+    -- Por rondas (F11): solo se adjudica lo que sigue Disponible. Los resultados de rondas
+    -- anteriores no se tocan; solo se descarta alguno que haya quedado de un activo
+    -- todavía Disponible. (pg-safeupdate exige WHERE en todo DELETE de la API.)
+    DELETE FROM sub_resultados
+    WHERE id_activo IN (SELECT id_activo FROM sub_activos WHERE estado = 'Disponible');
 
     CREATE TEMP TABLE temp_ofertas_eval_orig ON COMMIT DROP AS
     SELECT 
@@ -516,7 +519,15 @@ BEGIN
         PRIMARY KEY (id_colaborador, id_categoria)
     ) ON COMMIT DROP;
 
-    FOR v_cat IN 
+    -- El tope de 1 por categoría vale para toda la subasta: quien ya ganó en una
+    -- ronda anterior no puede ganar otro activo de esa categoría.
+    INSERT INTO temp_colaborador_categoria_bloqueado (id_colaborador, id_categoria)
+    SELECT DISTINCT r.id_colaborador_ganador, a.id_categoria
+    FROM sub_resultados r
+    JOIN sub_activos a ON a.id_activo = r.id_activo
+    WHERE r.id_colaborador_ganador IS NOT NULL;
+
+    FOR v_cat IN
         SELECT DISTINCT id_categoria 
         FROM temp_ofertas_eval 
         ORDER BY id_categoria 
@@ -636,9 +647,15 @@ BEGIN
 
     UPDATE sub_activos
     SET estado = 'Adjudicado'
-    WHERE id_activo IN (SELECT id_activo FROM sub_resultados);
+    WHERE id_activo IN (SELECT id_activo FROM temp_ganadores_asignados);
 
-    SELECT COUNT(*) INTO v_total_adjudicados FROM sub_resultados;
+    -- Adjudicados en esta ronda
+    SELECT COUNT(*) INTO v_total_adjudicados FROM temp_ganadores_asignados;
+
+    -- Ganadores nuevos: la publicación se pausa hasta que el admin los revise y vuelva a publicar
+    IF v_total_adjudicados > 0 THEN
+        UPDATE sub_app_config SET resultados_publicados = false WHERE id = 1;
+    END IF;
 
     RETURN json_build_object(
         'success', true,
@@ -1016,10 +1033,20 @@ CREATE OR REPLACE FUNCTION procesar_ganadores(p_token TEXT) RETURNS JSON
 LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public, extensions, pg_temp
 AS $$
+DECLARE
+    v_fecha_fin TIMESTAMP;
 BEGIN
     IF validar_sesion_admin(p_token) IS NULL THEN
         RETURN respuesta_sesion_invalida();
     END IF;
+
+    -- Adjudicar con la subasta abierta cerraría activos que todavía reciben ofertas
+    SELECT fecha_fin_subasta INTO v_fecha_fin FROM sub_app_config WHERE id = 1;
+    IF v_fecha_fin IS NULL OR NOW() <= v_fecha_fin THEN
+        RETURN json_build_object('success', false,
+            'error', 'La subasta sigue abierta. Los ganadores se procesan después de la fecha de cierre.');
+    END IF;
+
     RETURN procesar_ganadores();
 END;
 $$;
@@ -1446,7 +1473,7 @@ END $$;
 
 -- ═══════════════════════════════════════════════════════════
 -- 13. REGISTRO DE MIGRACIONES — esta instalación ya incluye
---     todo hasta 18; los scripts nuevos se registran al aplicarse
+--     todo hasta 19; los scripts nuevos se registran al aplicarse
 -- ═══════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS sub_migraciones (
@@ -1462,7 +1489,8 @@ INSERT INTO sub_migraciones (archivo) VALUES
 ('15_registro_migraciones.sql'),
 ('16_lecturas_con_sesion.sql'),
 ('17_login_rapido.sql'),
-('18_procesar_ganadores_where.sql')
+('18_procesar_ganadores_where.sql'),
+('19_adjudicacion_por_rondas.sql')
 ON CONFLICT (archivo) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════

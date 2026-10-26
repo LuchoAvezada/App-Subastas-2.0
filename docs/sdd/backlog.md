@@ -18,7 +18,8 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 | **F07** | Publicación de Resultados y Reasignación por Desistimiento | F06 | Ninguna | Medio | Alto | Medio | `✅ Completada` |
 | **F08** | Carga Masiva de Colaboradores y Configuración de Subasta | F02 | Ninguna | Bajo | Alto | Medio | `✅ Completada` |
 | **F09** | Cierre de la API Pública para Publicar en Internet | F02, F07 | Ninguna | Alto | Crítico | Medio | `✅ Completada` |
-| **F10** | Lecturas con Sesión y Publicación por Túnel | F09 | Ninguna | Alto | Crítico | Medio | `🔧 Implementada, pendiente de despliegue` |
+| **F10** | Lecturas con Sesión y Publicación por Túnel | F09 | Ninguna | Alto | Crítico | Medio | `✅ Completada` |
+| **F11** | Adjudicación por Rondas (segunda ronda con activos sin ofertas) | F06, F07 | Ninguna | Medio | Alto | Bajo | `🔧 Implementada, pendiente de despliegue` |
 
 ---
 
@@ -153,7 +154,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 
 ---
 
-### F10: Lecturas con Sesión y Publicación por Túnel (🔧 Implementada, pendiente de despliegue)
+### F10: Lecturas con Sesión y Publicación por Túnel (✅ Completada)
 - **Objetivo:** Publicar la app en internet con Tailscale Funnel (gratis, sin TI) sin exponer la nómina, las ofertas con postor ni los resultados antes de tiempo.
 - **Riesgo:** Alto. | **Valor:** Crítico. | **Esfuerzo:** Medio.
 - **Especificación:** `specs/010-lecturas-con-sesion/`.
@@ -162,3 +163,13 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
   - El mismo build funciona por la IP de la LAN y por el túnel, con fotos de ruta relativa.
   - Nginx limita el login y el registro por IP.
 - **Pendientes:** registro de cuenta sin segundo factor y veto P9 solo en el cliente.
+
+---
+
+### F11: Adjudicación por Rondas (🔧 Implementada, pendiente de despliegue)
+- **Objetivo:** Ampliar la subasta con una segunda ronda para los activos que no recibieron ofertas, sin perder los resultados de la primera.
+- **Especificación:** `specs/011-adjudicacion-por-rondas/`.
+- **Criterios de Aceptación:**
+  - "Procesar Ganadores" solo adjudica los activos Disponibles y nunca borra resultados anteriores.
+  - El tope de 1 activo por categoría vale para toda la subasta.
+  - Procesar con ganadores nuevos pausa la publicación; solo se procesa después del cierre.

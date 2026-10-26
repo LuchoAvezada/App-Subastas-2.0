@@ -345,7 +345,7 @@ export function PanelEvaluacion() {
         isOpen={isProcessModalOpen}
         onClose={() => setIsProcessModalOpen(false)}
         title="¿Ejecutar Algoritmo de Adjudicación?"
-        description="Esta acción cerrará la subasta y generará los resultados finales oficiales."
+        description="Adjudica los activos que siguen disponibles. Solo se puede ejecutar después de la fecha de cierre."
         size="md"
       >
         <div className="space-y-4">
@@ -353,10 +353,10 @@ export function PanelEvaluacion() {
             <WarningIcon className="w-[22px] h-[22px] text-amber-600 shrink-0 mt-0.5" />
             <div className="leading-relaxed space-y-1.5">
               <div>
-                <strong>Atención:</strong> Al ejecutar el procedimiento <code>procesar_ganadores()</code>, el sistema limpiará resultados anteriores y evaluará todas las ofertas aplicando:
+                <strong>Atención:</strong> Se evalúan las ofertas de los activos que siguen <strong>Disponibles</strong>. Los resultados de rondas anteriores se conservan. Se aplica:
               </div>
               <ul className="list-disc list-inside pl-1 text-[11px] text-amber-800 space-y-0.5">
-                <li><strong>Tope de equidad (Q-03):</strong> Máximo 1 activo adjudicado por categoría por colaborador.</li>
+                <li><strong>Tope de equidad (Q-03):</strong> Máximo 1 activo adjudicado por categoría por colaborador en toda la subasta, contando las rondas anteriores.</li>
                 <li><strong>Efecto cascada:</strong> Si un postor lidera múltiples activos en una categoría, se le adjudica el de mayor monto y los demás se reasignan al siguiente postor elegible.</li>
                 <li><strong>Desempates determinísticos:</strong> 1º Monto, 2º Nivel de Jerarquía, 3º Antigüedad de ingreso.</li>
               </ul>
@@ -364,7 +364,8 @@ export function PanelEvaluacion() {
           </div>
 
           <p className="text-xs text-gray-600 leading-relaxed">
-            Los activos asignados pasarán al estado <strong>Adjudicado</strong> y se generará la publicación oficial en <em>Resultados Finales</em>.
+            Los activos asignados pasarán al estado <strong>Adjudicado</strong>. Si hay ganadores nuevos, la publicación de resultados se pausa hasta que la vuelva a activar en Configuración.
+            Los activos sin ofertas quedan <strong>Disponibles</strong>: para una segunda ronda, defina una nueva fecha de cierre.
           </p>
 
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
