@@ -95,7 +95,7 @@ export function HomePage() {
           {/* Mascota Oficial Nino */}
           <div className="flex justify-center md:justify-end items-end shrink-0 -mb-6 sm:-mb-8 lg:-mb-10 self-center md:self-end">
             <img
-              src="/brand/mascota-nino.png"
+              src="/brand/mascota-nino.webp"
               alt="Nino - Mascota Oficial Agrotec"
               className="w-56 sm:w-64 md:w-72 lg:w-96 xl:w-[420px] max-w-full h-auto object-contain select-none pointer-events-none drop-shadow-2xl transition-transform duration-300 hover:scale-105"
               loading="eager"

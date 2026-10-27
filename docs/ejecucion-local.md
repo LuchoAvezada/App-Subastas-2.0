@@ -31,6 +31,7 @@ Esta guía documenta los pasos para levantar el entorno de desarrollo, ejecutar 
   - En producción la app usa como API el mismo origen desde el que se abre, así que el build funciona por la LAN y por el túnel público (`https://sp009.taildad9ad.ts.net`). `.env.production.local` solo necesita `VITE_SUPABASE_ANON_KEY`.
 - **Internet:** Tailscale Funnel publica el puerto 80 del NUC (`sudo tailscale funnel --bg 80`; se apaga con `sudo tailscale funnel --https=443 off`).
 - **Límite de login por IP:** `scripts/nginx-limite-login.conf` va en `/etc/nginx/conf.d/` (instrucciones en el archivo).
+- **Compresión:** `scripts/nginx-compresion.conf` también va en `/etc/nginx/conf.d/`. Sin él, el JS se envía sin comprimir.
 - **Base de datos:** las migraciones no las aplica el script. Se aplican a mano en el NUC, de a una y en orden:
   ```bash
   docker exec -i supabase-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < NN_archivo.sql
