@@ -12,6 +12,9 @@ import {
   CaretUpDownIcon,
   CaretUpIcon,
   CheckIcon,
+  KeyIcon,
+  LockIcon,
+  LockOpenIcon,
   MagnifyingGlassIcon,
   PencilSimpleIcon,
   UploadSimpleIcon,
@@ -19,6 +22,7 @@ import {
   UsersIcon,
   WarningCircleIcon,
 } from '@phosphor-icons/react';
+import { useAuth } from '../../hooks/useAuth';
 import { ColaboradorForm } from './ColaboradorForm';
 import { ImportarColaboradoresCsv } from './ImportarColaboradoresCsv';
 import type { DatosColaborador } from '../../types/domain';
@@ -42,7 +46,7 @@ const FILTROS: {
     campo: 'habilitado',
     titulo: 'Estado',
     todos: 'Todos los estados',
-    etiqueta: (c) => (c.habilitado === 'SI' ? 'Habilitados' : 'Inactivos'),
+    etiqueta: (c) => (c.habilitado === 'SI' ? 'Habilitados' : 'Bloqueados'),
   },
   {
     campo: 'usuario_registrado',
@@ -63,6 +67,38 @@ const COLUMNAS: { campo: CampoOrden; titulo: string; centrada?: boolean }[] = [
   { campo: 'rol', titulo: 'Rol' },
   { campo: 'habilitado', titulo: 'Habilitado', centrada: true },
 ];
+
+const ACCION_CLASS =
+  'inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:text-agrotec-800 hover:bg-agrotec-50 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-agrotec-500';
+
+type TipoAccion = 'bloquear' | 'desbloquear' | 'restablecer';
+
+/** Acciones de cuenta (F12): todas piden confirmación antes de llamar al servidor. */
+const ACCIONES: Record<
+  TipoAccion,
+  { titulo: string; aviso: string; exito: string; variant: 'danger' | 'primary' }
+> = {
+  bloquear: {
+    titulo: 'Bloquear acceso',
+    aviso:
+      'No podrá iniciar sesión, sus sesiones abiertas se cerrarán y sus ofertas no contarán en la adjudicación mientras siga bloqueado.',
+    exito: 'Acceso bloqueado',
+    variant: 'danger',
+  },
+  desbloquear: {
+    titulo: 'Desbloquear acceso',
+    aviso: 'Podrá volver a iniciar sesión y ofertar, y sus ofertas vuelven a contar en la adjudicación.',
+    exito: 'Acceso desbloqueado',
+    variant: 'primary',
+  },
+  restablecer: {
+    titulo: 'Restablecer contraseña',
+    aviso:
+      'Se borrará su cuenta y se cerrarán sus sesiones; sus datos, rol y ofertas no cambian. Para volver a entrar deberá registrarse de nuevo en "Activar / Registrar mi cuenta". Hágalo cuando la persona pueda registrarse en seguida: mientras tanto, cualquiera que conozca su CI podría registrarse antes.',
+    exito: 'Contraseña restablecida: ya puede registrarse de nuevo',
+    variant: 'danger',
+  },
+};
 
 /** Opciones de un filtro con su cantidad, en orden alfabético. */
 function opcionesDe(
@@ -98,9 +134,12 @@ export function ColaboradoresList() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editando, setEditando] = useState<DatosColaborador | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [accion, setAccion] = useState<{ tipo: TipoAccion; colaborador: DatosColaborador } | null>(null);
+  const [ejecutando, setEjecutando] = useState(false);
 
   const toast = useToast();
   const rpc = useRpcSesion();
+  const { usuario } = useAuth();
 
   const fetchColaboradores = useCallback(async () => {
     setLoading(true);
@@ -123,19 +162,26 @@ export function ColaboradoresList() {
     fetchColaboradores();
   }, [fetchColaboradores]);
 
-  const toggleHabilitado = async (idColaborador: number, estadoActual: string) => {
-    const nuevoEstado = estadoActual === 'SI' ? 'NO' : 'SI';
-    const res = await rpc('habilitar_colaborador', {
-      p_id_colaborador: idColaborador,
-      p_habilitado: nuevoEstado,
-    });
+  const ejecutarAccion = async () => {
+    if (!accion) return;
+    const { tipo, colaborador } = accion;
+    setEjecutando(true);
+    const res =
+      tipo === 'restablecer'
+        ? await rpc('restablecer_cuenta', { p_id_colaborador: colaborador.id_colaborador })
+        : await rpc('habilitar_colaborador', {
+            p_id_colaborador: colaborador.id_colaborador,
+            p_habilitado: tipo === 'bloquear' ? 'NO' : 'SI',
+          });
+    setEjecutando(false);
 
     if (!res.success) {
-      toast.error(`Error al actualizar colaborador: ${res.error}`);
-    } else {
-      toast.success(`Colaborador ${nuevoEstado === 'SI' ? 'habilitado' : 'deshabilitado'}`);
-      fetchColaboradores();
+      toast.error(res.error || 'No se pudo completar la acción.');
+      return;
     }
+    toast.success(ACCIONES[tipo].exito);
+    setAccion(null);
+    fetchColaboradores();
   };
 
   const visibles = ordenarColaboradores(
@@ -360,30 +406,57 @@ export function ColaboradoresList() {
                       <span className="text-xs font-medium text-gray-600">{c.rol ?? 'Sin rol'}</span>
                     </td>
                     <td className="py-3.5 px-4 text-center">
-                      <button
-                        onClick={() => toggleHabilitado(c.id_colaborador, c.habilitado)}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-colors ${
-                          c.habilitado === 'SI'
-                            ? 'bg-agrotec-100 text-agrotec-800 hover:bg-agrotec-200'
-                            : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                          c.habilitado === 'SI' ? 'bg-agrotec-100 text-agrotec-800' : 'bg-rose-100 text-rose-800'
                         }`}
-                        title="Haga clic para alternar habilitación"
                       >
-                        {c.habilitado === 'SI' ? 'HABILITADO' : 'INACTIVO'}
-                      </button>
+                        {c.habilitado === 'SI' ? 'HABILITADO' : 'BLOQUEADO'}
+                      </span>
                     </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <button
-                        onClick={() => {
-                          setEditando(c);
-                          setIsFormOpen(true);
-                        }}
-                        aria-label={`Editar a ${c.nombre}`}
-                        title="Editar colaborador"
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:text-agrotec-800 hover:bg-agrotec-50 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-agrotec-500"
-                      >
-                        <PencilSimpleIcon className="w-[18px] h-[18px]" aria-hidden="true" />
-                      </button>
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => {
+                            setEditando(c);
+                            setIsFormOpen(true);
+                          }}
+                          aria-label={`Editar a ${c.nombre}`}
+                          title="Editar colaborador"
+                          className={ACCION_CLASS}
+                        >
+                          <PencilSimpleIcon className="w-[18px] h-[18px]" aria-hidden="true" />
+                        </button>
+                        {/* Sobre la propia cuenta no se ofrecen: el servidor también las rechaza */}
+                        {c.ci_documento !== usuario?.ci_documento && (
+                          <>
+                            <button
+                              onClick={() =>
+                                setAccion({ tipo: c.habilitado === 'SI' ? 'bloquear' : 'desbloquear', colaborador: c })
+                              }
+                              aria-label={`${c.habilitado === 'SI' ? 'Bloquear' : 'Desbloquear'} acceso de ${c.nombre}`}
+                              title={c.habilitado === 'SI' ? 'Bloquear acceso' : 'Desbloquear acceso'}
+                              className={ACCION_CLASS}
+                            >
+                              {c.habilitado === 'SI' ? (
+                                <LockIcon className="w-[18px] h-[18px]" aria-hidden="true" />
+                              ) : (
+                                <LockOpenIcon className="w-[18px] h-[18px]" aria-hidden="true" />
+                              )}
+                            </button>
+                            {c.usuario_registrado === 'REGISTRADO' && (
+                              <button
+                                onClick={() => setAccion({ tipo: 'restablecer', colaborador: c })}
+                                aria-label={`Restablecer contraseña de ${c.nombre}`}
+                                title="Restablecer contraseña"
+                                className={ACCION_CLASS}
+                              >
+                                <KeyIcon className="w-[18px] h-[18px]" aria-hidden="true" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -397,6 +470,32 @@ export function ColaboradoresList() {
       {isCsvModalOpen && (
         <ImportarColaboradoresCsv onClose={() => setIsCsvModalOpen(false)} onImportado={fetchColaboradores} />
       )}
+
+      {/* Confirmación de bloqueo / desbloqueo / restablecer contraseña */}
+      <Modal
+        isOpen={accion !== null}
+        onClose={() => !ejecutando && setAccion(null)}
+        title={accion && ACCIONES[accion.tipo].titulo}
+        size="sm"
+      >
+        {accion && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-800">
+              <strong>{accion.colaborador.nombre}</strong>{' '}
+              <span className="font-mono text-xs text-gray-500">(CI {accion.colaborador.ci_documento})</span>
+            </p>
+            <p className="text-sm text-gray-600">{ACCIONES[accion.tipo].aviso}</p>
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+              <Button variant="outline" onClick={() => setAccion(null)} disabled={ejecutando}>
+                Cancelar
+              </Button>
+              <Button variant={ACCIONES[accion.tipo].variant} onClick={ejecutarAccion} isLoading={ejecutando}>
+                {ACCIONES[accion.tipo].titulo}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Modal de alta / edición */}
       <Modal

@@ -235,10 +235,8 @@ SELECT
     ca.nivel_jerarquia,
     r.descripcion AS rol,
     c.id_rol,
-    CASE
-        WHEN u.id_usuario IS NOT NULL THEN 'REGISTRADO'
-        ELSE 'PENDIENTE'
-    END AS usuario_registrado
+    CASE WHEN u.id_usuario IS NOT NULL THEN 'REGISTRADO' ELSE 'PENDIENTE' END AS usuario_registrado,
+    c.id_cargo
 FROM sub_colaboradores c
 JOIN sub_cargos ca ON c.id_cargo = ca.id_cargo
 LEFT JOIN sub_roles r ON c.id_rol = r.id_rol
@@ -1103,7 +1101,7 @@ EXCEPTION
 END;
 $$;
 
--- 4.2 Habilitar / deshabilitar desde la lista
+-- 4.2 Habilitar / bloquear desde la lista (F12: sin bloquearse a sí mismo, con auditoría)
 CREATE OR REPLACE FUNCTION habilitar_colaborador(
     p_token TEXT,
     p_id_colaborador INTEGER,
@@ -1112,8 +1110,13 @@ CREATE OR REPLACE FUNCTION habilitar_colaborador(
 LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public, extensions, pg_temp
 AS $$
+DECLARE
+    v_admin VARCHAR;
+    v_ci VARCHAR;
+    v_anterior VARCHAR;
 BEGIN
-    IF validar_sesion_admin(p_token) IS NULL THEN
+    v_admin := validar_sesion_admin(p_token);
+    IF v_admin IS NULL THEN
         RETURN respuesta_sesion_invalida();
     END IF;
 
@@ -1121,11 +1124,63 @@ BEGIN
         RETURN json_build_object('success', false, 'error', 'El estado debe ser SI o NO.');
     END IF;
 
-    UPDATE sub_colaboradores SET habilitado = p_habilitado WHERE id_colaborador = p_id_colaborador;
+    SELECT ci_documento, habilitado INTO v_ci, v_anterior
+    FROM sub_colaboradores WHERE id_colaborador = p_id_colaborador;
 
     IF NOT FOUND THEN
         RETURN json_build_object('success', false, 'error', 'El colaborador no existe.');
     END IF;
+
+    IF v_ci = v_admin AND p_habilitado = 'NO' THEN
+        RETURN json_build_object('success', false, 'error', 'No puede bloquear su propio acceso.');
+    END IF;
+
+    UPDATE sub_colaboradores SET habilitado = p_habilitado WHERE id_colaborador = p_id_colaborador;
+
+    INSERT INTO sub_auditoria_cambios (tabla_afectada, id_registro, accion, campo, valor_anterior, valor_nuevo, usuario)
+    VALUES ('sub_colaboradores', p_id_colaborador, 'UPDATE', 'habilitado', v_anterior, p_habilitado, v_admin);
+
+    RETURN json_build_object('success', true);
+END;
+$$;
+
+-- 4.2b Restablecer contraseña (F12): borra la cuenta para que vuelva a registrarse
+CREATE OR REPLACE FUNCTION restablecer_cuenta(p_token TEXT, p_id_colaborador INTEGER) RETURNS JSON
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, extensions, pg_temp
+AS $$
+DECLARE
+    v_admin VARCHAR;
+    v_ci VARCHAR;
+    v_borradas INTEGER;
+BEGIN
+    v_admin := validar_sesion_admin(p_token);
+    IF v_admin IS NULL THEN
+        RETURN respuesta_sesion_invalida();
+    END IF;
+
+    SELECT ci_documento INTO v_ci FROM sub_colaboradores WHERE id_colaborador = p_id_colaborador;
+    IF NOT FOUND THEN
+        RETURN json_build_object('success', false, 'error', 'El colaborador no existe.');
+    END IF;
+
+    IF v_ci = v_admin THEN
+        RETURN json_build_object('success', false, 'error', 'No puede restablecer su propia cuenta.');
+    END IF;
+
+    -- Las sesiones se borran en cascada
+    DELETE FROM sub_usuarios WHERE id_colaborador = p_id_colaborador;
+    GET DIAGNOSTICS v_borradas = ROW_COUNT;
+    IF v_borradas = 0 THEN
+        RETURN json_build_object('success', false, 'error', 'El colaborador no tiene cuenta registrada.');
+    END IF;
+
+    -- Sin esto, los fallos previos podrían bloquear el primer login con la contraseña nueva
+    DELETE FROM sub_intentos_login WHERE usuario = v_ci AND exitoso = 'N';
+
+    -- id_registro es el colaborador: es lo que sigue existiendo después del borrado
+    INSERT INTO sub_auditoria_cambios (tabla_afectada, id_registro, accion, campo, valor_anterior, usuario)
+    VALUES ('sub_usuarios', p_id_colaborador, 'DELETE', 'cuenta', v_ci, v_admin);
 
     RETURN json_build_object('success', true);
 END;
@@ -1423,6 +1478,7 @@ GRANT EXECUTE ON FUNCTION cancelar_oferta(TEXT, INTEGER) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION procesar_ganadores(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION guardar_colaborador(TEXT, INTEGER, TEXT, TEXT, DATE, TEXT, INTEGER, INTEGER) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION habilitar_colaborador(TEXT, INTEGER, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION restablecer_cuenta(TEXT, INTEGER) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION importar_colaboradores(TEXT, JSONB) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION actualizar_fecha_cierre(TEXT, TIMESTAMP) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION guardar_activo(TEXT, INTEGER, INTEGER, TEXT, TEXT, TEXT, TEXT, TEXT, NUMERIC, TEXT, TEXT) TO anon, authenticated;
@@ -1473,7 +1529,7 @@ END $$;
 
 -- ═══════════════════════════════════════════════════════════
 -- 13. REGISTRO DE MIGRACIONES — esta instalación ya incluye
---     todo hasta 19; los scripts nuevos se registran al aplicarse
+--     todo hasta 20; los scripts nuevos se registran al aplicarse
 -- ═══════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS sub_migraciones (
@@ -1490,7 +1546,8 @@ INSERT INTO sub_migraciones (archivo) VALUES
 ('16_lecturas_con_sesion.sql'),
 ('17_login_rapido.sql'),
 ('18_procesar_ganadores_where.sql'),
-('19_adjudicacion_por_rondas.sql')
+('19_adjudicacion_por_rondas.sql'),
+('20_restablecer_y_bloquear_cuenta.sql')
 ON CONFLICT (archivo) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════

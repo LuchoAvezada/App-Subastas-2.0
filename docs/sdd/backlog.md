@@ -20,6 +20,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 | **F09** | Cierre de la API Pública para Publicar en Internet | F02, F07 | Ninguna | Alto | Crítico | Medio | `✅ Completada` |
 | **F10** | Lecturas con Sesión y Publicación por Túnel | F09 | Ninguna | Alto | Crítico | Medio | `✅ Completada` |
 | **F11** | Adjudicación por Rondas (segunda ronda con activos sin ofertas) | F06, F07 | Ninguna | Medio | Alto | Bajo | `🔧 Implementada, pendiente de despliegue` |
+| **F12** | Restablecer Contraseña y Bloquear Acceso desde Colaboradores | F08, F09 | Ninguna | Medio | Alto | Bajo | `🔧 Implementada, pendiente de despliegue` |
 
 ---
 
@@ -173,3 +174,12 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
   - "Procesar Ganadores" solo adjudica los activos Disponibles y nunca borra resultados anteriores.
   - El tope de 1 activo por categoría vale para toda la subasta.
   - Procesar con ganadores nuevos pausa la publicación; solo se procesa después del cierre.
+
+### F12: Restablecer Contraseña y Bloquear Acceso (🔧 Implementada, pendiente de despliegue)
+- **Objetivo:** Que un administrador restablezca la contraseña de un colaborador (borra su cuenta para que vuelva a registrarse) y bloquee o desbloquee su acceso desde Colaboradores, con confirmación y auditoría.
+- **Especificación:** `specs/012-restablecer-y-bloquear-cuenta/`.
+- **Criterios de Aceptación:**
+  - Restablecer solo aparece para cuentas registradas y no toca colaborador, rol ni ofertas.
+  - Bloquear = inhabilitar: corta login y sesiones, y saca sus ofertas de la adjudicación.
+  - Un admin no puede bloquearse ni restablecerse a sí mismo.
+  - Editar un colaborador muestra su cargo ya seleccionado.
