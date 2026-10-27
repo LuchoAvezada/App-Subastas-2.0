@@ -2,7 +2,7 @@
 
 **Feature ID**: F12  
 **Fecha**: 2026-10-27  
-**Estado**: Implementada (pendiente de aplicar `sql/20_restablecer_y_bloquear_cuenta.sql` en el NUC)  
+**Estado**: Implementada (pendiente de aplicar `sql/21_login_cuenta_bloqueada.sql` en el NUC)  
 
 ---
 
@@ -24,6 +24,7 @@
 ### RF-02: Bloquear acceso = inhabilitar
 - El botón "Bloquear acceso" (candado) pone `habilitado = NO`, con confirmación. "Desbloquear" lo revierte.
 - Bloqueado: no inicia sesión ni se registra, sus sesiones abiertas dejan de valer y sus ofertas no cuentan en la adjudicación.
+- Al intentar entrar con la contraseña correcta ve "Su cuenta se encuentra bloqueada, contacte a su administrador." (`sql/21_login_cuenta_bloqueada.sql`). Con una contraseña incorrecta sigue viendo "Credenciales inválidas.", para no revelar qué cédulas están bloqueadas.
 - El estado en la tabla pasa a ser una etiqueta (HABILITADO / BLOQUEADO), no un botón.
 
 ### RF-03: Sobre la propia cuenta
@@ -42,6 +43,6 @@
 
 - [ ] Editar un colaborador muestra su cargo ya seleccionado.
 - [ ] El botón de llave solo aparece en colaboradores "Registrado"; tras confirmar, pasa a "Pendiente" y puede registrarse con una contraseña nueva.
-- [ ] Bloquear a un colaborador con sesión abierta: en su próxima acción la app lo saca; no puede volver a iniciar sesión.
+- [ ] Bloquear a un colaborador con sesión abierta: en su próxima acción la app lo saca; al volver a entrar ve el mensaje de cuenta bloqueada.
 - [ ] En la fila del propio admin no aparecen candado ni llave; llamar a las funciones con su propio id responde con error.
 - [ ] Cada acción deja una fila en `sub_auditoria_cambios`.

@@ -397,6 +397,7 @@ DECLARE
     v_intentos_fallidos INTEGER;
     v_id_usuario INTEGER;
     v_hash TEXT;
+    v_habilitado TEXT;
     v_token TEXT;
 BEGIN
     SELECT COUNT(*) INTO v_intentos_fallidos
@@ -415,11 +416,11 @@ BEGIN
     -- Primero se busca la cuenta por cédula y recién después se calcula un solo bcrypt.
     -- Con crypt() en el WHERE, Postgres lo evaluaba en cada fila de sub_usuarios y el
     -- login superaba el statement_timeout de anon apenas se registraron varias cuentas.
-    SELECT u.id_usuario, u.password_hash INTO v_id_usuario, v_hash
+    -- habilitado se lee aparte: el bloqueo se informa solo si la contraseña es correcta
+    SELECT u.id_usuario, u.password_hash, c.habilitado INTO v_id_usuario, v_hash, v_habilitado
     FROM sub_usuarios u
     JOIN sub_colaboradores c ON u.id_colaborador = c.id_colaborador
     WHERE c.ci_documento = p_ci_documento
-      AND c.habilitado = 'SI'
       AND u.situacion = 'A'
     LIMIT 1;
 
@@ -427,6 +428,11 @@ BEGIN
     -- no revela qué cédulas tienen cuenta.
     IF v_hash IS DISTINCT FROM crypt(p_password, COALESCE(v_hash, gen_salt('bf', 10))) THEN
         v_id_usuario := NULL;
+    END IF;
+
+    IF v_id_usuario IS NOT NULL AND v_habilitado IS DISTINCT FROM 'SI' THEN
+        RETURN json_build_object('success', false,
+            'error', 'Su cuenta se encuentra bloqueada, contacte a su administrador.');
     END IF;
 
     INSERT INTO sub_intentos_login (usuario, exitoso, ip_origen)
@@ -1529,7 +1535,7 @@ END $$;
 
 -- ═══════════════════════════════════════════════════════════
 -- 13. REGISTRO DE MIGRACIONES — esta instalación ya incluye
---     todo hasta 20; los scripts nuevos se registran al aplicarse
+--     todo hasta 21; los scripts nuevos se registran al aplicarse
 -- ═══════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS sub_migraciones (
@@ -1547,7 +1553,8 @@ INSERT INTO sub_migraciones (archivo) VALUES
 ('17_login_rapido.sql'),
 ('18_procesar_ganadores_where.sql'),
 ('19_adjudicacion_por_rondas.sql'),
-('20_restablecer_y_bloquear_cuenta.sql')
+('20_restablecer_y_bloquear_cuenta.sql'),
+('21_login_cuenta_bloqueada.sql')
 ON CONFLICT (archivo) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════

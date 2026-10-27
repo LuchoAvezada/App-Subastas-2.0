@@ -22,6 +22,7 @@ Esta guía documenta los pasos para levantar el entorno de desarrollo, ejecutar 
   - `18_procesar_ganadores_where.sql` corrige "DELETE requires a WHERE clause" al procesar ganadores: Supabase rechaza DELETE/UPDATE sin WHERE en la API, incluso dentro de funciones. Toda sentencia nueva de ese tipo debe llevar WHERE.
   - `19_adjudicacion_por_rondas.sql` (F11) permite una segunda ronda con los activos sin ofertas: "Procesar Ganadores" solo adjudica lo Disponible, no borra rondas anteriores, mantiene el tope por categoría en toda la subasta, pausa la publicación y solo corre después del cierre.
   - `20_restablecer_y_bloquear_cuenta.sql` (F12) agrega `restablecer_cuenta`, impide que un admin se bloquee a sí mismo, audita bloqueos y restablecimientos, y devuelve `id_cargo` a la vista de colaboradores (al editar, el cargo aparecía vacío). Transaccional e idempotente.
+  - `21_login_cuenta_bloqueada.sql` (F12): con la contraseña correcta, un colaborador bloqueado ve "Su cuenta se encuentra bloqueada, contacte a su administrador." en lugar de "Credenciales inválidas.". Solo reemplaza `autenticar_usuario`.
   - `scripts/huella_esquema.sql` resume funciones, tablas, vistas, permisos de `anon` y políticas en una fila con hash por elemento. Si la huella del servidor coincide con la de una instalación limpia del repo, el esquema es el mismo.
 
 ## Publicación en el servidor on-prem (NUC)
