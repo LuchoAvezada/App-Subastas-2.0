@@ -2,7 +2,7 @@
 
 **Feature ID**: F10  
 **Fecha**: 2026-10-26  
-**Estado**: Implementada (pendiente de aplicar `sql/16_lecturas_con_sesion.sql` y la config de Nginx en el NUC)  
+**Estado**: Desplegada (`sql/16` y la config de Nginx aplicadas en el NUC el 2026-10-26), falta la prueba manual  
 
 ---
 
@@ -64,4 +64,4 @@ Además, el build tenía fija la URL `http://20.20.20.77` y las fotos se guardab
 - [ ] En el NUC, la verificación final de `sql/16` da `false` en las cinco primeras columnas y `true` en la última.
 - [ ] Con la anon key, `GET /rest/v1/sub_colaboradores` responde 401.
 - [ ] Desde el celular con datos móviles: login, catálogo con fotos, ofertar, Mis Ofertas.
-- [ ] El access log de Nginx muestra IPs públicas (no 127.0.0.1) en las visitas por el túnel.
+- [x] El access log de Nginx muestra IPs públicas (no 127.0.0.1) en las visitas por el túnel.

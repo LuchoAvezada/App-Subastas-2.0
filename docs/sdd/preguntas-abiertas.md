@@ -20,6 +20,10 @@ Este documento registra las decisiones de negocio y alcance aprobadas por el res
 | **Q-05** | Protocolo ante desistimiento de un ganador | F07 (Resultados) | Reasignación automática en el sistema al siguiente postor | `✅ Resuelta` |
 | **Q-06** | Recursos de marca (Gabarito y logo Agrotec) | F01 (Marca y Base) | Descarga oficial de Gabarito (SIL OFL) y logo en `public/brand/` | `✅ Resuelta` |
 | **Q-07** | ¿La importación CSV debe dar de baja a quienes no figuran en el archivo? | F08 (Colaboradores) | — (hoy no se dan de baja) | `pendiente` |
+| **Q-08** | ¿Cómo se publica la app en internet? | F10 (Publicación) | Tailscale Funnel, con acceso libre y lecturas protegidas por la sesión | `✅ Resuelta` |
+| **Q-09** | ¿Qué pasa con los activos que quedan sin ofertas al cierre? | F11 (Adjudicación) | Segunda ronda solo con los Disponibles, sin borrar la primera y con el tope por categoría de toda la subasta | `✅ Resuelta` |
+| **Q-10** | ¿Cómo se recupera una contraseña y cómo se bloquea un acceso? | F12 (Colaboradores) | Solo un administrador: restablecer borra la cuenta para registrarse de nuevo; bloquear es inhabilitar | `✅ Resuelta` |
+| **Q-11** | ¿Hace falta un segundo factor para registrar la cuenta? | F02 / F10 / F12 (Acceso) | — (hoy basta conocer la cédula) | `pendiente` |
 
 ---
 
@@ -106,4 +110,49 @@ Este documento registra las decisiones de negocio y alcance aprobadas por el res
   - Opción 1: un conteo más en el reporte.
   - Opciones 2 y 3: una segunda escritura y cuidar no deshabilitar administradores.
 - **Para qué feature:** F08 (Carga Masiva de Colaboradores).
+- **Estado:** `pendiente`
+
+---
+
+### Q-08: Publicación de la app en internet
+- **Contexto:** Hay colaboradores que no van a la oficina, así que la app tiene que poder usarse fuera de la LAN. Abrir puertos o depender de TI no era viable en los plazos.
+- **Decisión adoptada:** **Tailscale Funnel** (`https://sp009.taildad9ad.ts.net`), gratis y con HTTPS incluido. El acceso es libre: no hace falta VPN ni cuenta de Tailscale.
+- **Impacto técnico:**
+  - La anon key solo lee el catálogo; la nómina, las ofertas con postor y los resultados se leen con el token de sesión (`leer_datos`).
+  - El mismo build sirve por la LAN y por el túnel (URL de la API desde el navegador, fotos con ruta relativa).
+  - Nginx limita los intentos de login y registro por IP.
+- **Para qué feature:** F10 (Lecturas con Sesión y Publicación por Túnel).
+- **Estado:** `✅ Resuelta` (2026-10-26)
+
+---
+
+### Q-09: Activos sin ofertas al cierre de la subasta
+- **Contexto:** Antes de F11, procesar ganadores por segunda vez borraba los resultados de la primera.
+- **Decisión adoptada:** **Segunda ronda solo con los activos Disponibles**.
+  - El admin define una nueva fecha de cierre y la subasta se reabre.
+  - "Procesar Ganadores" no borra rondas anteriores y solo corre después del cierre.
+  - El tope de 1 activo por categoría vale para toda la subasta, incluidas las reasignaciones.
+  - Si una ronda adjudica algo, la publicación se pausa hasta que el admin revise.
+- **Impacto técnico:** reemplazo de `procesar_ganadores` (`sql/19_adjudicacion_por_rondas.sql`), sin columna de ronda.
+- **Para qué feature:** F11 (Adjudicación por Rondas).
+- **Estado:** `✅ Resuelta` (2026-10-26)
+
+---
+
+### Q-10: Recuperación de contraseña y bloqueo de acceso
+- **Contexto:** No había forma de recuperar una contraseña, y el bloqueo era un clic sin confirmación sobre el estado del colaborador.
+- **Decisión adoptada:** **Ambas acciones solo las hace un administrador, desde Colaboradores**.
+  - Restablecer borra la cuenta; el colaborador vuelve a registrarse con una contraseña nueva. No hay recuperación por el propio usuario ni correos.
+  - Bloquear es inhabilitar (`habilitado = NO`), con confirmación. Con la contraseña correcta, el bloqueado ve un mensaje propio.
+  - Un admin no puede aplicarlas sobre su propia cuenta, y todo queda auditado.
+- **Impacto técnico:** `restablecer_cuenta`, cambios en `habilitar_colaborador` y `autenticar_usuario` (`sql/20` y `sql/21`).
+- **Para qué feature:** F12 (Restablecer Contraseña y Bloquear Acceso).
+- **Estado:** `✅ Resuelta` (2026-10-27)
+
+---
+
+### Q-11: Segundo factor en el registro de cuenta
+- **Contexto:** `registrar_nuevo_usuario` deja crear la contraseña a quien conozca la cédula de un colaborador habilitado que todavía no se registró, o que un admin acaba de restablecer. Con la app en internet (Q-08), el riesgo es mayor. Quedó fuera del alcance de F09, F10 y F12.
+- **Opciones:** a definir (por ejemplo, un código de activación entregado por RRHH o por el administrador).
+- **Para qué feature:** F02 (Autenticación) / nueva feature.
 - **Estado:** `pendiente`

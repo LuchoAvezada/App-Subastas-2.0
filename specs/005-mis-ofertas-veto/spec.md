@@ -3,7 +3,7 @@
 **Feature ID**: F05  
 **Branch**: `005-mis-ofertas-veto`  
 **Fecha**: 2026-10-13  
-**Estado**: In Progress  
+**Estado**: Completed  
 
 ---
 

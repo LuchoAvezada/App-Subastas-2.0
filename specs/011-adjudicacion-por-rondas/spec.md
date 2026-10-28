@@ -2,7 +2,7 @@
 
 **Feature ID**: F11  
 **Fecha**: 2026-10-26  
-**Estado**: Implementada (pendiente de aplicar `sql/19_adjudicacion_por_rondas.sql` en el NUC)  
+**Estado**: Desplegada (`sql/19` aplicada en el NUC el 2026-10-26), falta la prueba manual  
 
 ---
 

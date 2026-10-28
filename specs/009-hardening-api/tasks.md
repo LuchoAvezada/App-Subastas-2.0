@@ -2,7 +2,7 @@
 
 **Feature**: F09  
 **Fecha**: 2026-10-22  
-**Estado**: Implementada, pendiente de despliegue  
+**Estado**: Desplegada (2026-10-22), falta la prueba manual T009  
 
 ---
 

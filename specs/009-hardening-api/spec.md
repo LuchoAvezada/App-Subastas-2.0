@@ -2,7 +2,7 @@
 
 **Feature ID**: F09  
 **Fecha**: 2026-10-22  
-**Estado**: Implementada (pendiente de aplicar `sql/14_hardening_api.sql` en el servidor on-prem)  
+**Estado**: Desplegada (`sql/14` aplicada en el NUC el 2026-10-22), falta la prueba manual T009  
 
 ---
 

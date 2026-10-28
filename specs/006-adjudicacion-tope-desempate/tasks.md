@@ -2,7 +2,7 @@
 
 **Feature**: F06  
 **Fecha**: 2026-10-14  
-**Estado**: En Ejecución  
+**Estado**: Completada  
 
 ---
 

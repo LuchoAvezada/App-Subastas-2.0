@@ -2,7 +2,7 @@
 
 **Feature ID**: F12  
 **Fecha**: 2026-10-27  
-**Estado**: Implementada (pendiente de aplicar `sql/21_login_cuenta_bloqueada.sql` en el NUC)  
+**Estado**: Desplegada (`sql/20` y `sql/21` aplicadas en el NUC el 2026-10-27, build `270489b`), falta la prueba manual  
 
 ---
 

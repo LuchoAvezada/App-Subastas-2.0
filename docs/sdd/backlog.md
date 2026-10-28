@@ -19,8 +19,8 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 | **F08** | Carga Masiva de Colaboradores y Configuración de Subasta | F02 | Ninguna | Bajo | Alto | Medio | `✅ Completada` |
 | **F09** | Cierre de la API Pública para Publicar en Internet | F02, F07 | Ninguna | Alto | Crítico | Medio | `✅ Completada` |
 | **F10** | Lecturas con Sesión y Publicación por Túnel | F09 | Ninguna | Alto | Crítico | Medio | `✅ Completada` |
-| **F11** | Adjudicación por Rondas (segunda ronda con activos sin ofertas) | F06, F07 | Ninguna | Medio | Alto | Bajo | `🔧 Implementada, pendiente de despliegue` |
-| **F12** | Restablecer Contraseña y Bloquear Acceso desde Colaboradores | F08, F09 | Ninguna | Medio | Alto | Bajo | `🔧 Implementada, pendiente de despliegue` |
+| **F11** | Adjudicación por Rondas (segunda ronda con activos sin ofertas) | F06, F07 | Ninguna | Medio | Alto | Bajo | `🚀 Desplegada, falta prueba manual` |
+| **F12** | Restablecer Contraseña y Bloquear Acceso desde Colaboradores | F08, F09 | Ninguna | Medio | Alto | Bajo | `🚀 Desplegada, falta prueba manual` |
 
 ---
 
@@ -142,7 +142,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 
 ---
 
-### F09: Cierre de la API Pública para Publicar en Internet (🔧 Implementada, pendiente de despliegue)
+### F09: Cierre de la API Pública para Publicar en Internet (✅ Completada)
 - **Objetivo:** Que la anon key (pública, va en el JS) no permita escrituras directas ni leer datos sensibles, para publicar la app con Cloudflare Tunnel y la autenticación propia por cédula.
 - **Riesgo:** Alto. | **Valor:** Crítico. | **Esfuerzo:** Medio.
 - **Especificación:** `specs/009-hardening-api/`.
@@ -167,7 +167,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 
 ---
 
-### F11: Adjudicación por Rondas (🔧 Implementada, pendiente de despliegue)
+### F11: Adjudicación por Rondas (🚀 Desplegada, falta prueba manual)
 - **Objetivo:** Ampliar la subasta con una segunda ronda para los activos que no recibieron ofertas, sin perder los resultados de la primera.
 - **Especificación:** `specs/011-adjudicacion-por-rondas/`.
 - **Criterios de Aceptación:**
@@ -175,7 +175,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
   - El tope de 1 activo por categoría vale para toda la subasta.
   - Procesar con ganadores nuevos pausa la publicación; solo se procesa después del cierre.
 
-### F12: Restablecer Contraseña y Bloquear Acceso (🔧 Implementada, pendiente de despliegue)
+### F12: Restablecer Contraseña y Bloquear Acceso (🚀 Desplegada, falta prueba manual)
 - **Objetivo:** Que un administrador restablezca la contraseña de un colaborador (borra su cuenta para que vuelva a registrarse) y bloquee o desbloquee su acceso desde Colaboradores, con confirmación y auditoría.
 - **Especificación:** `specs/012-restablecer-y-bloquear-cuenta/`.
 - **Criterios de Aceptación:**
