@@ -28,5 +28,5 @@
 
 ## Fase 4: Calidad y Despliegue
 - [x] **T009**: `npm.cmd run lint`, `npm.cmd test` y `npm.cmd run build` sin errores (2026-10-29: 139 pruebas). PDF y Excel generados en el navegador con datos de ejemplo; las pantallas no se probaron con sesión (el entorno de desarrollo apunta a Supabase en la nube).
-- [ ] **T010**: Aplicar `sql/22` en el NUC (✅ 2026-11-01, junto con la 23 del veto P9) y publicar el build (pendiente).
+- [x] **T010**: Aplicar `sql/22` en el NUC y publicar el build (2026-11-01: 22 y 23 aplicadas; frontend 8a4432a publicado).
 - [ ] **T011**: Prueba manual de los criterios de aceptación de `spec.md` §4.

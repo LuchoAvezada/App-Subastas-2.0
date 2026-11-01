@@ -21,7 +21,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 | **F10** | Lecturas con Sesión y Publicación por Túnel | F09 | Ninguna | Alto | Crítico | Medio | `✅ Completada` |
 | **F11** | Adjudicación por Rondas (segunda ronda con activos sin ofertas) | F06, F07 | Ninguna | Medio | Alto | Bajo | `🚀 Desplegada, falta prueba manual` |
 | **F12** | Restablecer Contraseña y Bloquear Acceso desde Colaboradores | F08, F09 | Ninguna | Medio | Alto | Bajo | `🚀 Desplegada, falta prueba manual` |
-| **F13** | Post-subasta: PDF para el comité, Excel de ofertas y ajustes de Resultados | F07, F11 | Ninguna | Medio | Alto | Medio | `🛠️ Implementada, pendiente de despliegue` |
+| **F13** | Post-subasta: PDF para el comité, Excel de ofertas y ajustes de Resultados | F07, F11 | Ninguna | Medio | Alto | Medio | `🚀 Desplegada, falta prueba manual` |
 
 ---
 
