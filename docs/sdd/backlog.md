@@ -21,6 +21,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 | **F10** | Lecturas con Sesión y Publicación por Túnel | F09 | Ninguna | Alto | Crítico | Medio | `✅ Completada` |
 | **F11** | Adjudicación por Rondas (segunda ronda con activos sin ofertas) | F06, F07 | Ninguna | Medio | Alto | Bajo | `🚀 Desplegada, falta prueba manual` |
 | **F12** | Restablecer Contraseña y Bloquear Acceso desde Colaboradores | F08, F09 | Ninguna | Medio | Alto | Bajo | `🚀 Desplegada, falta prueba manual` |
+| **F13** | Post-subasta: PDF para el comité, Excel de ofertas y ajustes de Resultados | F07, F11 | Ninguna | Medio | Alto | Medio | `🛠️ Implementada, pendiente de despliegue` |
 
 ---
 
@@ -151,7 +152,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
   - Toda escritura pasa por RPC con el token de sesión: las de administración lo validan como admin, y las ofertas toman al colaborador del token.
   - Solo un administrador puede adjudicar (`procesar_ganadores`).
   - Las fotos solo se suben a rutas autorizadas por el servidor.
-- **Pendientes:** lectura de la nómina y de las ofertas con la anon key (resuelto en F10), registro de cuenta sin segundo factor y veto P9 solo en el cliente (ver `spec.md` §3).
+- **Pendientes:** lectura de la nómina y de las ofertas con la anon key (resuelto en F10), registro de cuenta sin segundo factor (se mantiene por decisión del Directorio Ejecutivo) y veto P9 solo en el cliente (resuelto en `sql/23_veto_servidor.sql`, aplicada en el NUC el 2026-11-01).
 
 ---
 
@@ -163,7 +164,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
   - La anon key solo lee el catálogo; el resto se lee con `leer_datos(p_token, ...)`.
   - El mismo build funciona por la IP de la LAN y por el túnel, con fotos de ruta relativa.
   - Nginx limita el login y el registro por IP.
-- **Pendientes:** registro de cuenta sin segundo factor y veto P9 solo en el cliente.
+- **Pendientes:** registro de cuenta sin segundo factor (se mantiene por decisión del Directorio Ejecutivo). El veto P9 pasó al servidor en `sql/23_veto_servidor.sql`.
 
 ---
 
@@ -183,3 +184,13 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
   - Bloquear = inhabilitar: corta login y sesiones, y saca sus ofertas de la adjudicación.
   - Un admin no puede bloquearse ni restablecerse a sí mismo.
   - Editar un colaborador muestra su cargo ya seleccionado.
+
+---
+
+### F13: Post-subasta: Reportes para el Comité y Vista de Resultados (🛠️ Implementada, pendiente de despliegue)
+- **Objetivo:** Entregar al comité un PDF solo con lo que valida (activo y ganador con su cargo y motivo), un Excel con todas las ofertas y el motivo automático de cada resultado, ocultar del catálogo lo ya adjudicado y limitar los totales de Resultados a la administración.
+- **Especificación:** `specs/013-post-subasta/`.
+- **Criterios de Aceptación:**
+  - Las pestañas de categorías muestran solo activos Disponibles.
+  - Resultados se filtra por categoría; los totales solo los ve un admin.
+  - El criterio "GANADO POR TOPE DE CATEGORIA" reemplaza a los desempates mal calculados cuando el mejor postor ya tenía otro activo de la categoría.

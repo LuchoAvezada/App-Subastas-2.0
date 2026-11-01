@@ -42,7 +42,8 @@ export type CriterioDesempate =
   | 'GANADO POR OFERTA MAS ALTA'
   | 'GANADO POR JERARQUIA'
   | 'GANADO POR ANTIGUEDAD'
-  | 'GANADO POR REGISTRO DE OFERTA';
+  | 'GANADO POR REGISTRO DE OFERTA'
+  | 'GANADO POR TOPE DE CATEGORIA';
 
 export interface ResultadoAdjudicacion {
   id_activo: number;
@@ -51,7 +52,7 @@ export interface ResultadoAdjudicacion {
   criterio_desempate: CriterioDesempate;
 }
 
-interface PostorEnriquecido {
+export interface PostorEnriquecido {
   id_oferta: number;
   id_activo: number;
   id_colaborador: number;
@@ -64,7 +65,7 @@ interface PostorEnriquecido {
 /**
  * Función de comparación para ordenar postores en orden de mérito decreciente.
  */
-function compararPostores(a: PostorEnriquecido, b: PostorEnriquecido): number {
+export function compararPostores(a: PostorEnriquecido, b: PostorEnriquecido): number {
   // 1. Mayor monto
   if (b.monto !== a.monto) {
     return b.monto - a.monto;
@@ -90,11 +91,17 @@ function compararPostores(a: PostorEnriquecido, b: PostorEnriquecido): number {
 }
 
 /**
- * Determina el criterio formal de adjudicación comparando el ganador con el segundo postor.
+ * Determina el criterio formal de adjudicación comparando el ganador con el mejor
+ * de los demás postores elegibles del activo.
  */
-function clasificarCriterio(ganador: PostorEnriquecido, segundo?: PostorEnriquecido): CriterioDesempate {
+export function clasificarCriterio(ganador: PostorEnriquecido, segundo?: PostorEnriquecido): CriterioDesempate {
   if (!segundo) {
     return 'GANADO POR OFERTA MAS ALTA';
+  }
+
+  // Si el otro postor iba primero, no ganó porque ya tenía otro activo de la categoría (F13)
+  if (compararPostores(segundo, ganador) < 0) {
+    return 'GANADO POR TOPE DE CATEGORIA';
   }
 
   if (ganador.monto > segundo.monto) {
@@ -272,20 +279,21 @@ export function procesarAdjudicacion(
 
     // Paso C: Construir resultados finales para esta categoría clasificando el criterio de desempate
     for (const [idActivo, ganador] of ganadoresCategoria.entries()) {
-      // Para auditar el criterio de desempate, comparar con el segundo postor de ese activo
+      // Para auditar el criterio de desempate, comparar con el mejor de los demás postores elegibles
       const todosLosPostores = ofertas
         .filter((o) => o.id_activo === idActivo && o.id_colaborador !== ganador.id_colaborador)
-        .map((o) => {
+        .flatMap((o) => {
           const colab = colaboradorMap.get(o.id_colaborador);
-          return {
+          if (!colab) return [];
+          return [{
             id_oferta: o.id_oferta,
             id_activo: o.id_activo,
             id_colaborador: o.id_colaborador,
             monto: o.monto,
             fecha_hora: o.fecha_hora,
-            nivel_jerarquia: colab ? (cargoMap.get(colab.id_cargo) ?? 99) : 99,
-            fecha_ingreso: colab ? colab.fecha_ingreso : '9999-12-31',
-          };
+            nivel_jerarquia: cargoMap.get(colab.id_cargo) ?? 99,
+            fecha_ingreso: colab.fecha_ingreso,
+          }];
         })
         .sort(compararPostores);
 

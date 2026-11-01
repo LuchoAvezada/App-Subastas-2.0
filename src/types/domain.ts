@@ -91,7 +91,7 @@ export interface ResultadoDetalle {
   fam: string | null;
   categoria: string;
   precio_base: number;
-  id_colaborador_ganador: number;
+  id_colaborador_ganador: number | null;
   colaborador_ganador: string;
   ci_documento: string;
   monto_final: number;

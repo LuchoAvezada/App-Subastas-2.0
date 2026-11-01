@@ -166,6 +166,9 @@ describe('Algoritmo de Adjudicación F06 (Tope por Categoría y Desempate)', () 
     const resActivo11 = resultados.find((r) => r.id_activo === 11);
     expect(resActivo11?.id_colaborador_ganador).toBe(103);
     expect(resActivo11?.monto_final).toBe(400);
+    // Juan ofertó más, pero ya tenía otro activo de la categoría (F13)
+    expect(resActivo11?.criterio_desempate).toBe('GANADO POR TOPE DE CATEGORIA');
+    expect(resActivo10?.criterio_desempate).toBe('GANADO POR OFERTA MAS ALTA');
   });
 
   it('debe permitir que un colaborador gane activos en categorías DISTINTAS (ej. Notebook y Celular)', () => {
@@ -237,5 +240,7 @@ describe('Algoritmo de Adjudicación F06 (Tope por Categoría y Desempate)', () 
     expect(resultados).toHaveLength(1);
     expect(resultados[0].id_colaborador_ganador).toBe(101); // Juan gana porque admin e inhabilitado son ignorados
     expect(resultados[0].monto_final).toBe(300);
+    // Los no elegibles tampoco cuentan para el criterio (F13)
+    expect(resultados[0].criterio_desempate).toBe('GANADO POR OFERTA MAS ALTA');
   });
 });

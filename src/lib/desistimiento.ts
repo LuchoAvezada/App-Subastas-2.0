@@ -2,7 +2,6 @@
  * Módulo de Gobernanza y Desistimiento F07 — Subasta Interna Agrotec S.A.
  * 1. Control de acceso condicional a resultados (publicación oficial por administración).
  * 2. Motor de reasignación automática por desistimiento respetando topes de equidad.
- * 3. Generación de reporte oficial de ganadores para revisión y auditoría.
  */
 
 import type {
@@ -12,7 +11,7 @@ import type {
   CargoInput,
   ActivoInput,
 } from './adjudicacion';
-import type { Usuario, ResultadoDetalle } from '../types/domain';
+import type { Usuario } from '../types/domain';
 
 export type EstadoAdjudicacion = 'Adjudicado' | 'Desistido' | 'Reasignado' | 'Desierto';
 
@@ -151,74 +150,5 @@ export function calcularReasignacion(input: ReasignacionInput): ResultadoReasign
     monto_final: 0,
     criterio_desempate: 'DESIERTO TRAS DESISTIMIENTO',
     motivo_desistimiento: motivo,
-  };
-}
-
-export interface FilaReporteGanadores {
-  'ID Activo': number;
-  'Categoría': string;
-  'Marca / Modelo': string;
-  'Serial Number': string;
-  'FAM': string;
-  'Precio Base USD': number;
-  'Monto Final USD': number;
-  'Colaborador Ganador': string;
-  'C.I. Ganador': string;
-  'Nivel Jerárquico': number;
-  'Fecha Ingreso': string;
-  'Criterio Adjudicación': string;
-  'Estado Adjudicación': string;
-  'Fecha Cierre': string;
-}
-
-export interface ReporteGanadores {
-  totalAdjudicados: number;
-  montoTotal: number;
-  items: FilaReporteGanadores[];
-}
-
-/**
- * Genera la estructura detallada del informe ejecutivo de ganadores adjudicados.
- */
-export function generarReporteGanadores(
-  resultados: ResultadoDetalle[],
-  colaboradores: ColaboradorInput[],
-  cargos: CargoInput[]
-): ReporteGanadores {
-  const cargoMap = new Map<number, number>();
-  cargos.forEach((c) => cargoMap.set(c.id_cargo, c.nivel_jerarquia));
-
-  const colaboradorMap = new Map<number, ColaboradorInput>();
-  colaboradores.forEach((c) => colaboradorMap.set(c.id_colaborador, c));
-
-  const items: FilaReporteGanadores[] = resultados.map((r) => {
-    const colab = colaboradorMap.get(r.id_colaborador_ganador);
-    const nivel = colab ? (cargoMap.get(colab.id_cargo) ?? 0) : 0;
-    const ingreso = colab?.fecha_ingreso || 'N/A';
-
-    return {
-      'ID Activo': r.id_activo,
-      'Categoría': r.categoria,
-      'Marca / Modelo': `${r.marca || ''} ${r.modelo || ''}`.trim(),
-      'Serial Number': r.serialnumber || 'N/A',
-      'FAM': r.fam || 'N/A',
-      'Precio Base USD': r.precio_base || 0,
-      'Monto Final USD': Number(r.monto_final),
-      'Colaborador Ganador': r.colaborador_ganador,
-      'C.I. Ganador': r.ci_documento,
-      'Nivel Jerárquico': nivel,
-      'Fecha Ingreso': ingreso,
-      'Criterio Adjudicación': r.criterio_desempate,
-      'Estado Adjudicación': r.estado_adjudicacion || 'Adjudicado',
-      'Fecha Cierre': r.fecha_cierre_display || '',
-    };
-  });
-
-  const montoTotal = items.reduce((acc, curr) => acc + curr['Monto Final USD'], 0);
-
-  return {
-    totalAdjudicados: items.length,
-    montoTotal,
-    items,
   };
 }

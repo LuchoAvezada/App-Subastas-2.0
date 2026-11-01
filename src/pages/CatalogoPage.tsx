@@ -13,15 +13,17 @@ export function CatalogoPage() {
 
   // El hook debe llamarse incondicionalmente (rules-of-hooks); se pasa el id
   // de categoría o undefined si la ruta es inválida (justo antes de redirigir).
+  // Solo los Disponibles: los adjudicados o desiertos ya no se ofertan (F13).
   const { activos, loading, refetch } = useActivos({
     idCategoria: catConfig?.id,
+    estado: 'Disponible',
   });
 
   if (!catConfig) {
     return <Navigate to="/" replace />;
   }
 
-  const disponiblesCount = activos.filter((a) => a.estado === 'Disponible').length;
+  const disponiblesCount = activos.length;
 
   return (
     <div className="space-y-6">

@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   calcularReasignacion,
   puedeVerResultados,
-  generarReporteGanadores,
   type ReasignacionInput,
 } from '../src/lib/desistimiento';
 import type { ResultadoAdjudicacion, OfertaInput, ColaboradorInput, CargoInput, ActivoInput } from '../src/lib/adjudicacion';
@@ -190,40 +189,6 @@ describe('Feature F07: Publicación de Resultados y Reasignación por Desistimie
     it('todos los usuarios autenticados pueden ver resultados una vez publicados oficialmente (resultados_publicados = true)', () => {
       expect(puedeVerResultados(regularUser, true)).toBe(true);
       expect(puedeVerResultados(visitorUser, true)).toBe(true);
-    });
-  });
-
-  describe('Generación de Reporte de Ganadores', () => {
-    it('debe estructurar el reporte con todas las columnas auditables requeridas', () => {
-      const resultadosMock = [
-        {
-          id_resultado: 1,
-          id_activo: 1,
-          marca: 'Dell',
-          modelo: 'Latitude',
-          serialnumber: 'SN123',
-          fam: 'FAM-01',
-          categoria: 'Notebooks',
-          precio_base: 300,
-          id_colaborador_ganador: 101,
-          colaborador_ganador: 'Juan Pérez',
-          ci_documento: '1001',
-          monto_final: 500,
-          criterio_desempate: 'GANADO POR OFERTA MAS ALTA',
-          fecha_cierre_display: '14/10/2026 12:00:00',
-          fecha_cierre: '2026-10-14T15:00:00Z',
-          estado_adjudicacion: 'Adjudicado' as const,
-        },
-      ];
-
-      const reporte = generarReporteGanadores(resultadosMock, colaboradores, cargos);
-
-      expect(reporte.totalAdjudicados).toBe(1);
-      expect(reporte.montoTotal).toBe(500);
-      expect(reporte.items).toHaveLength(1);
-      expect(reporte.items[0]['Colaborador Ganador']).toBe('Juan Pérez');
-      expect(reporte.items[0]['Monto Final USD']).toBe(500);
-      expect(reporte.items[0]['Nivel Jerárquico']).toBe(4);
     });
   });
 });

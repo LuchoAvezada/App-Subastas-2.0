@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { formatUSD } from '../lib/utils';
@@ -10,21 +10,23 @@ import { useToast } from '../components/ui/Toast';
 import { useAuth } from '../hooks/useAuth';
 import { useRpcSesion } from '../hooks/useRpcSesion';
 import { useCountdown } from '../hooks/useCountdown';
-import { puedeVerResultados, generarReporteGanadores } from '../lib/desistimiento';
+import { puedeVerResultados } from '../lib/desistimiento';
+import { explicarOfertas, type Desistimiento } from '../lib/explicacionOfertas';
+import type { ActivoReporte } from '../lib/reportesPostSubasta';
 import {
   ArrowsClockwiseIcon,
   CheckCircleIcon,
-  DownloadSimpleIcon,
   EyeIcon,
   EyeSlashIcon,
+  FilePdfIcon,
+  FileXlsIcon,
   MedalIcon,
   TrophyIcon,
   UserMinusIcon,
   WarningIcon,
 } from '@phosphor-icons/react';
-import type { ResultadoDetalle } from '../types/domain';
+import type { OfertaRecibida, ResultadoDetalle } from '../types/domain';
 import type { ColaboradorInput } from '../lib/adjudicacion';
-import Papa from 'papaparse';
 
 export function ResultadosPage() {
   const { usuario, logout } = useAuth();
@@ -34,6 +36,8 @@ export function ResultadosPage() {
 
   const [resultados, setResultados] = useState<ResultadoDetalle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filtroCategoria, setFiltroCategoria] = useState('');
+  const [generando, setGenerando] = useState<'pdf' | 'excel' | null>(null);
 
   // Modales
   const [desistimientoModalOpen, setDesistimientoModalOpen] = useState(false);
@@ -64,65 +68,47 @@ export function ResultadosPage() {
 
   const canView = puedeVerResultados(usuario, countdown.resultadosPublicados);
 
-  // Exportar CSV estándar de resultados
-  const handleExportCSV = () => {
-    if (resultados.length === 0) return;
+  const categorias = useMemo(
+    () => [...new Set(resultados.map((r) => r.categoria))].sort((a, b) => a.localeCompare(b)),
+    [resultados]
+  );
+  const visibles = filtroCategoria ? resultados.filter((r) => r.categoria === filtroCategoria) : resultados;
 
-    const dataToExport = resultados.map((r) => ({
-      'ID Resultado': r.id_resultado,
-      'ID Activo': r.id_activo,
-      'Categoría': r.categoria,
-      'Marca / Modelo': `${r.marca || ''} ${r.modelo || ''}`.trim(),
-      'Serial Number': r.serialnumber || '',
-      'FAM': r.fam || '',
-      'Colaborador Ganador': r.colaborador_ganador,
-      'CI Ganador': r.ci_documento,
-      'Monto Adjudicado USD': r.monto_final,
-      'Criterio Aplicado': r.criterio_desempate,
-      'Estado Adjudicación': r.estado_adjudicacion || 'Adjudicado',
-      'Fecha Adjudicación': r.fecha_cierre_display,
-    }));
-
-    const csv = Papa.unparse(dataToExport);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `resultados_subasta_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  // Exportar reporte formal de ganadores
-  const handleDescargarReporteGanadores = async () => {
+  // Reportes post-subasta F13 (solo admin): respetan el filtro de categoría
+  const handleGenerarReporte = async (tipo: 'pdf' | 'excel') => {
+    setGenerando(tipo);
     try {
-      // Obtener datos maestros para cruzar niveles jerárquicos
-      const [nomina, { data: cargos }] = await Promise.all([
+      const [ofertas, nomina, desistimientos, { data: activos, error }, reportes] = await Promise.all([
+        rpc<{ filas: OfertaRecibida[] }>('leer_datos', { p_consulta: 'ofertas' }),
         rpc<{ filas: ColaboradorInput[] }>('leer_datos', { p_consulta: 'nomina' }),
-        supabase.from('sub_cargos').select('id_cargo, nivel_jerarquia'),
+        rpc<{ filas: Desistimiento[] }>('leer_datos', { p_consulta: 'desistimientos' }),
+        supabase.from('sub_activos').select('id_activo, observacion, estado'),
+        import('../lib/reportesPostSubasta'),
       ]);
-      if (!nomina.success) throw new Error(nomina.error);
+      for (const res of [ofertas, nomina, desistimientos]) {
+        if (!res.success) throw new Error(res.error);
+      }
+      if (error) throw error;
 
-      const reporte = generarReporteGanadores(
+      const explicadas = explicarOfertas(
+        ofertas.filas ?? [],
         resultados,
         nomina.filas ?? [],
-        (cargos as any) || []
-      );
+        desistimientos.filas ?? []
+      ).filter((e) => !filtroCategoria || e.oferta.categoria === filtroCategoria);
+      const mapaActivos = new Map((activos as ActivoReporte[]).map((a) => [a.id_activo, a]));
 
-      const csv = Papa.unparse(reporte.items);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `reporte_ganadores_adjudicados_${new Date().toISOString().slice(0, 10)}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success('Reporte de ganadores generado exitosamente.');
+      if (tipo === 'pdf') {
+        await reportes.descargarPdfComite(visibles, explicadas, mapaActivos, filtroCategoria);
+      } else {
+        await reportes.descargarExcelOfertas(visibles, explicadas, mapaActivos, filtroCategoria);
+      }
+      toast.success(tipo === 'pdf' ? 'PDF para el comité generado.' : 'Excel de ofertas generado.');
     } catch (err) {
-      console.error('Error generando reporte de ganadores:', err);
+      console.error('Error generando el reporte:', err);
       toast.error('No fue posible generar el reporte.');
+    } finally {
+      setGenerando(null);
     }
   };
 
@@ -163,7 +149,7 @@ export function ResultadosPage() {
     }
   };
 
-  const totalRecaudado = resultados.reduce((acc, curr) => acc + Number(curr.monto_final), 0);
+  const totalRecaudado = visibles.reduce((acc, curr) => acc + Number(curr.monto_final), 0);
 
   // REDIRECCIÓN SILENCIOSA SI NO ESTÁ PUBLICADO Y NO ES ADMIN
   if (!canView) {
@@ -200,15 +186,28 @@ export function ResultadosPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
             <Button
               variant="outline"
               size="sm"
               className="bg-white"
-              leftIcon={<DownloadSimpleIcon className="w-4 h-4" />}
-              onClick={handleDescargarReporteGanadores}
+              disabled={resultados.length === 0 || generando !== null}
+              isLoading={generando === 'pdf'}
+              leftIcon={<FilePdfIcon className="w-4 h-4" />}
+              onClick={() => handleGenerarReporte('pdf')}
             >
-              Generar Reporte de Ganadores (CSV)
+              PDF para el comité
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-white"
+              disabled={resultados.length === 0 || generando !== null}
+              isLoading={generando === 'excel'}
+              leftIcon={<FileXlsIcon className="w-4 h-4" />}
+              onClick={() => handleGenerarReporte('excel')}
+            >
+              Excel de ofertas
             </Button>
           </div>
         </div>
@@ -239,42 +238,60 @@ export function ResultadosPage() {
             Actualizar
           </Button>
 
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={resultados.length === 0}
-            onClick={handleExportCSV}
-            leftIcon={<DownloadSimpleIcon className="w-4 h-4" />}
-          >
-            Exportar CSV
-          </Button>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="p-5 rounded-2xl bg-white border border-gray-200/80 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-gray-500 block">Total Activos Adjudicados</span>
-            <span className="text-2xl font-black text-gray-900 mt-1 block">{resultados.length}</span>
-          </div>
-          <div className="p-3 bg-agrotec-50 rounded-2xl text-agrotec-800">
-            <CheckCircleIcon className="w-6 h-6" />
-          </div>
+      {/* Filtro por categoría */}
+      {categorias.length > 1 && (
+        <div className="flex items-center gap-2 flex-wrap" role="group" aria-label="Filtrar por categoría">
+          <span className="text-xs font-semibold text-gray-500 mr-1">Categoría:</span>
+          {['', ...categorias].map((cat) => {
+            const activa = filtroCategoria === cat;
+            return (
+              <button
+                key={cat || 'todas'}
+                type="button"
+                aria-pressed={activa}
+                onClick={() => setFiltroCategoria(cat)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                  activa
+                    ? 'bg-agrotec-700 border-agrotec-700 text-white'
+                    : 'bg-white border-gray-200 text-gray-700 hover:border-agrotec-300 hover:text-agrotec-800'
+                }`}
+              >
+                {cat || 'Todas'}
+              </button>
+            );
+          })}
         </div>
+      )}
 
-        <div className="p-5 rounded-2xl bg-white border border-gray-200/80 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-gray-500 block">Monto Total Adjudicado</span>
-            <span className="text-2xl font-black text-agrotec-800 mt-1 block">
-              {formatUSD(totalRecaudado)}
-            </span>
+      {/* KPI Cards: solo administración (F13) */}
+      {usuario?.es_admin && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-5 rounded-2xl bg-white border border-gray-200/80 shadow-sm flex items-center justify-between">
+            <div>
+              <span className="text-xs font-semibold text-gray-500 block">Total Activos Adjudicados</span>
+              <span className="text-2xl font-black text-gray-900 mt-1 block">{visibles.length}</span>
+            </div>
+            <div className="p-3 bg-agrotec-50 rounded-2xl text-agrotec-800">
+              <CheckCircleIcon className="w-6 h-6" />
+            </div>
           </div>
-          <div className="p-3 bg-agrotec-50 rounded-2xl text-agrotec-800">
-            <MedalIcon className="w-6 h-6" />
+
+          <div className="p-5 rounded-2xl bg-white border border-gray-200/80 shadow-sm flex items-center justify-between">
+            <div>
+              <span className="text-xs font-semibold text-gray-500 block">Monto Total Adjudicado</span>
+              <span className="text-2xl font-black text-agrotec-800 mt-1 block">
+                {formatUSD(totalRecaudado)}
+              </span>
+            </div>
+            <div className="p-3 bg-agrotec-50 rounded-2xl text-agrotec-800">
+              <MedalIcon className="w-6 h-6" />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Table listing */}
       {loading ? (
@@ -303,7 +320,7 @@ export function ResultadosPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 font-medium">
-                {resultados.map((r) => {
+                {visibles.map((r) => {
                   const estado = r.estado_adjudicacion || 'Adjudicado';
                   const isDesierto = estado === 'Desierto';
 
