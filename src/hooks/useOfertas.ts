@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
 import { useRpcSesion } from './useRpcSesion';
-import { hasVetoColaborador, registrarVeto } from '../lib/vetos';
+import { hasVetoColaborador, registrarVeto, sincronizarVetos, type VetoRegistro } from '../lib/vetos';
 import type { OfertaRecibida, RpcResponse } from '../types/domain';
 
 export function useOfertas() {
@@ -22,8 +22,12 @@ export function useOfertas() {
     setLoading(true);
     setError(null);
     try {
-      // El servidor devuelve solo las ofertas del dueño del token (F10)
-      const res = await rpc<{ filas: OfertaRecibida[] }>('leer_datos', { p_consulta: 'mis_ofertas' });
+      // El servidor devuelve solo las ofertas y vetos del dueño del token (F10, sql/23)
+      const [res, resVetos] = await Promise.all([
+        rpc<{ filas: OfertaRecibida[] }>('leer_datos', { p_consulta: 'mis_ofertas' }),
+        rpc<{ filas: VetoRegistro[] }>('leer_datos', { p_consulta: 'mis_vetos' }),
+      ]);
+      if (resVetos.success) sincronizarVetos(usuario.id_colaborador, resVetos.filas ?? []);
 
       if (!res.success) {
         setError(res.error || 'Error al cargar ofertas');

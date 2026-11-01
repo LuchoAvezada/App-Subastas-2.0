@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 export interface VetoRegistro {
   id_activo: number;
@@ -115,5 +115,29 @@ describe('Mis Ofertas y Cancelación con Veto de Reincidencia — F05', () => {
       const resActivo12 = validarPuedeOfertar(5, 12);
       expect(resActivo12.permitido).toBe(true);
     });
+  });
+});
+
+describe('sincronizarVetos — caché local de los vetos del servidor (sql/23)', () => {
+  it('toma los del servidor y conserva los locales anteriores a la migración', async () => {
+    const datos = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => datos.get(k) ?? null,
+      setItem: (k: string, v: string) => void datos.set(k, v),
+    });
+    vi.stubGlobal('window', { dispatchEvent: () => true });
+    const { sincronizarVetos, getVetosColaborador } = await import('../src/lib/vetos');
+
+    const veto = (id_activo: number, monto_cancelado: number) => ({
+      id_activo, id_colaborador: 7, monto_cancelado, fecha_cancelacion: '2026-11-01T10:00:00-03:00',
+    });
+    datos.set('agrotec_subasta_vetos_7', JSON.stringify([veto(1, 50), veto(2, 60)]));
+
+    sincronizarVetos(7, [veto(2, 65), veto(3, 70)]);
+
+    const vetos = getVetosColaborador(7);
+    expect(vetos.map((v) => v.id_activo).sort()).toEqual([1, 2, 3]);
+    expect(vetos.find((v) => v.id_activo === 2)?.monto_cancelado).toBe(65); // gana el servidor
+    vi.unstubAllGlobals();
   });
 });

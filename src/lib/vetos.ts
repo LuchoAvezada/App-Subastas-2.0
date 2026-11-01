@@ -33,6 +33,21 @@ export function hasVetoColaborador(idColaborador: number, idActivo: number): boo
 }
 
 /**
+ * Reemplaza el caché local con los vetos del servidor, que es quien los hace cumplir (sql/23).
+ * Conserva los locales que el servidor no conoce: anulaciones previas a la migración 23.
+ */
+export function sincronizarVetos(idColaborador: number, delServidor: VetoRegistro[]): void {
+  try {
+    const enServidor = new Set(delServidor.map((v) => v.id_activo));
+    const previos = getVetosColaborador(idColaborador).filter((v) => !enServidor.has(v.id_activo));
+    localStorage.setItem(`${STORAGE_KEY_PREFIX}${idColaborador}`, JSON.stringify([...delServidor, ...previos]));
+    window.dispatchEvent(new CustomEvent('agrotec_veto_registrado'));
+  } catch (err) {
+    console.error('Error al sincronizar vetos en almacenamiento local:', err);
+  }
+}
+
+/**
  * Registra un veto irrevocable tras la cancelación voluntaria de una oferta
  */
 export function registrarVeto(veto: VetoRegistro): void {

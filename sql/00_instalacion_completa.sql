@@ -133,6 +133,15 @@ CREATE TABLE IF NOT EXISTS sub_desistimientos (
     PRIMARY KEY (id_activo, id_colaborador)
 );
 
+-- Veto P9: quien anuló su oferta por un activo no vuelve a ofertar en él
+CREATE TABLE IF NOT EXISTS sub_vetos (
+    id_activo       INTEGER NOT NULL REFERENCES sub_activos(id_activo),
+    id_colaborador  INTEGER NOT NULL REFERENCES sub_colaboradores(id_colaborador),
+    monto           NUMERIC(10, 2) NOT NULL,
+    fecha           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (id_activo, id_colaborador)
+);
+
 -- ═══════════════════════════════════════════════════════════
 -- 5. CONFIGURACIÓN
 -- ═══════════════════════════════════════════════════════════
@@ -486,6 +495,7 @@ DECLARE
     v_total_adjudicados INTEGER;
     v_ganador RECORD;
     v_segundo RECORD;
+    v_primero INTEGER;
     v_criterio VARCHAR(100);
 BEGIN
     -- Por rondas (F11): solo se adjudica lo que sigue Disponible. Los resultados de rondas
@@ -620,6 +630,19 @@ BEGIN
         JOIN temp_ofertas_eval_orig orig ON g.id_oferta = orig.id_oferta
         ORDER BY g.id_activo
     LOOP
+        -- Colaborador con la mejor oferta válida del activo. Si no es el ganador, es
+        -- porque ya tenía otro activo de esta categoría: ganó por el tope (F13).
+        SELECT id_colaborador INTO v_primero
+        FROM temp_ofertas_eval_orig
+        WHERE id_activo = v_ganador.id_activo
+        ORDER BY 
+            monto DESC,
+            nivel_jerarquia ASC,
+            fecha_ingreso ASC,
+            fecha_hora ASC,
+            id_oferta ASC
+        LIMIT 1;
+
         SELECT monto, nivel_jerarquia, fecha_ingreso, fecha_hora
         INTO v_segundo
         FROM temp_ofertas_eval_orig
@@ -635,6 +658,8 @@ BEGIN
 
         IF NOT FOUND THEN
             v_criterio := 'GANADO POR OFERTA MAS ALTA';
+        ELSIF v_primero <> v_ganador.id_colaborador THEN
+            v_criterio := 'GANADO POR TOPE DE CATEGORIA';
         ELSIF v_ganador.monto > v_segundo.monto THEN
             v_criterio := 'GANADO POR OFERTA MAS ALTA';
         ELSIF v_ganador.nivel_jerarquia < v_segundo.nivel_jerarquia THEN
@@ -963,6 +988,11 @@ BEGIN
         RETURN json_build_object('success', false, 'error', 'Este activo no está disponible para ofertas.');
     END IF;
 
+    IF EXISTS (SELECT 1 FROM sub_vetos WHERE id_activo = p_id_activo AND id_colaborador = v_id_colaborador) THEN
+        RETURN json_build_object('success', false,
+            'error', 'Posees un veto permanente de reincidencia en este activo debido a una cancelación previa.');
+    END IF;
+
     IF p_monto IS NULL OR p_monto < v_precio_base THEN
         RETURN json_build_object('success', false,
             'error', 'El monto ofertado debe ser mayor o igual al precio base (USD ' || v_precio_base || ').');
@@ -979,7 +1009,7 @@ EXCEPTION
 END;
 $$;
 
--- 2.2 Anular una oferta propia antes del cierre (P9; el veto sigue en el cliente)
+-- 2.2 Anular una oferta propia antes del cierre (P9: deja el veto en sub_vetos)
 CREATE OR REPLACE FUNCTION cancelar_oferta(
     p_token TEXT,
     p_id_oferta INTEGER
@@ -1014,6 +1044,11 @@ BEGIN
     END IF;
 
     DELETE FROM sub_ofertas WHERE id_oferta = p_id_oferta;
+
+    -- Veto P9: no vuelve a ofertar en este activo
+    INSERT INTO sub_vetos (id_activo, id_colaborador, monto)
+    VALUES (v_oferta.id_activo, v_id_colaborador, v_oferta.monto)
+    ON CONFLICT (id_activo, id_colaborador) DO NOTHING;
 
     INSERT INTO sub_auditoria_cambios (tabla_afectada, id_registro, accion, campo, valor_anterior, usuario)
     SELECT 'sub_ofertas', p_id_oferta, 'DELETE', 'monto', v_oferta.monto::TEXT, ci_documento
@@ -1395,9 +1430,9 @@ AS $$
 $$;
 
 -- F10: lecturas que exigen sesión (la anon key solo lee el catálogo)
---   'mis_ofertas'                        → cualquier sesión, solo las propias
+--   'mis_ofertas', 'mis_vetos'           → cualquier sesión, solo los propios
 --   'resultados'                         → admin siempre; el resto si están publicados
---   'ofertas', 'colaboradores', 'nomina' → solo admin
+--   'ofertas', 'colaboradores', 'nomina', 'desistimientos' → solo admin
 CREATE OR REPLACE FUNCTION leer_datos(p_token TEXT, p_consulta TEXT) RETURNS JSON
 LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = public, extensions, pg_temp
@@ -1415,6 +1450,15 @@ BEGIN
         SELECT json_agg(o ORDER BY o.fecha_hora DESC) INTO v_filas
         FROM sub_v_ofertas_recibidas o
         WHERE o.id_colaborador = v_id_colaborador;
+
+    ELSIF p_consulta = 'mis_vetos' THEN
+        SELECT json_agg(v ORDER BY v.fecha_cancelacion DESC) INTO v_filas
+        FROM (SELECT ve.id_activo, ve.id_colaborador, a.marca, a.modelo, cat.tipo AS categoria,
+                     ve.monto AS monto_cancelado, ve.fecha AS fecha_cancelacion
+              FROM sub_vetos ve
+              JOIN sub_activos a ON a.id_activo = ve.id_activo
+              JOIN sub_categorias cat ON cat.id_categoria = a.id_categoria
+              WHERE ve.id_colaborador = v_id_colaborador) v;
 
     ELSIF p_consulta = 'resultados' THEN
         IF NOT v_es_admin
@@ -1441,6 +1485,11 @@ BEGIN
         FROM (SELECT id_colaborador, ci_documento, nombre, fecha_ingreso, habilitado, id_cargo, id_rol
               FROM sub_colaboradores) n;
 
+    ELSIF p_consulta = 'desistimientos' THEN
+        SELECT json_agg(d ORDER BY d.id_activo, d.fecha) INTO v_filas
+        FROM (SELECT id_activo, id_colaborador, motivo, fecha
+              FROM sub_desistimientos) d;
+
     ELSE
         RETURN json_build_object('success', false, 'error', 'Consulta desconocida.');
     END IF;
@@ -1455,8 +1504,8 @@ $$;
 --     que corren como dueño de las tablas.
 -- ═══════════════════════════════════════════════════════════
 
--- Sesiones y desistimientos: inaccesibles desde la API
-REVOKE ALL ON sub_sesiones, sub_desistimientos FROM PUBLIC, anon, authenticated;
+-- Sesiones, desistimientos y vetos: inaccesibles desde la API
+REVOKE ALL ON sub_sesiones, sub_desistimientos, sub_vetos FROM PUBLIC, anon, authenticated;
 ALTER TABLE sub_sesiones ENABLE ROW LEVEL SECURITY;  -- sin políticas: segunda barrera
 
 -- F09: ninguna tabla ni vista acepta escrituras directas por la API
@@ -1535,7 +1584,7 @@ END $$;
 
 -- ═══════════════════════════════════════════════════════════
 -- 13. REGISTRO DE MIGRACIONES — esta instalación ya incluye
---     todo hasta 21; los scripts nuevos se registran al aplicarse
+--     todo hasta 23; los scripts nuevos se registran al aplicarse
 -- ═══════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS sub_migraciones (
@@ -1554,7 +1603,9 @@ INSERT INTO sub_migraciones (archivo) VALUES
 ('18_procesar_ganadores_where.sql'),
 ('19_adjudicacion_por_rondas.sql'),
 ('20_restablecer_y_bloquear_cuenta.sql'),
-('21_login_cuenta_bloqueada.sql')
+('21_login_cuenta_bloqueada.sql'),
+('22_post_subasta.sql'),
+('23_veto_servidor.sql')
 ON CONFLICT (archivo) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════
