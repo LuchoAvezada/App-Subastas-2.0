@@ -2,7 +2,7 @@
 
 **Feature ID**: F14  
 **Fecha**: 2026-11-02  
-**Estado**: Implementada, pendiente de despliegue (`sql/24`)  
+**Estado**: Desplegada (`sql/24` aplicada en el NUC el 2026-11-02, build `a4e40b6`), falta la prueba manual  
 
 ---
 
