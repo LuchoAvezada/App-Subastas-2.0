@@ -18,6 +18,7 @@ describe('F13: explicación de ofertas ganadoras y perdedoras', () => {
 
   const categoriaDe: Record<number, string> = {
     1: 'Notebooks', 2: 'Notebooks', 3: 'Celulares', 4: 'Celulares', 5: 'Notebooks', 6: 'Tablets', 7: 'Tablets', 8: 'Otros',
+    9: 'Otros', 10: 'Otros',
   };
 
   let siguienteId = 1;
@@ -70,7 +71,7 @@ describe('F13: explicación de ofertas ganadoras y perdedoras', () => {
     oferta(2, 102, 300), oferta(2, 103, 300),
     // Activo 3: empate en monto y jerarquía, gana Carlos por antigüedad
     oferta(3, 101, 250), oferta(3, 103, 250),
-    // Activo 4: empate total, gana Ana por registrar primero
+    // Activo 4: empate total, pero Carlos ya ganó el activo 3 (Celulares): gana Ana por el tope
     oferta(4, 106, 150, '2026-10-10T09:00:00Z'), oferta(4, 103, 150, '2026-10-10T09:15:00Z'),
     // Activo 5: Juan ofertó más pero ya ganó el activo 1 (Notebooks)
     oferta(5, 101, 700), oferta(5, 103, 200),
@@ -119,8 +120,16 @@ describe('F13: explicación de ofertas ganadoras y perdedoras', () => {
     expect(de(2, 103).comentario).toMatch(/perdió por jerarquía/);
     expect(de(3, 103).comentario).toBe(textoCriterio('GANADO POR ANTIGUEDAD'));
     expect(de(3, 101).comentario).toMatch(/perdió por antigüedad/);
-    expect(de(4, 106).comentario).toBe(textoCriterio('GANADO POR REGISTRO DE OFERTA'));
-    expect(de(4, 103).comentario).toMatch(/perdió por orden de registro/);
+    expect(de(4, 106).comentario).toBe(textoCriterio('GANADO POR TOPE DE CATEGORIA'));
+    expect(de(4, 103).comentario).toMatch(/^Tope de categoría: ya ganó el activo #3/);
+  });
+
+  it('respeta el criterio de registro guardado antes de F14', () => {
+    const r4 = { ...resultado(4, 106), criterio_desempate: 'GANADO POR REGISTRO DE OFERTA' };
+    const ev = explicarOfertas(ofertas, [...resultados.filter((r) => r.id_activo !== 4), r4], nomina, desistimientos);
+    const en4 = (c: number) => ev.find((e) => e.oferta.id_activo === 4 && e.oferta.id_colaborador === c)!;
+    expect(en4(106).comentario).toBe(textoCriterio('GANADO POR REGISTRO DE OFERTA'));
+    expect(en4(103).comentario).toMatch(/perdió por orden de registro/);
   });
 
   it('explica el tope de categoría en el perdedor y en el ganador', () => {
@@ -134,6 +143,25 @@ describe('F13: explicación de ofertas ganadoras y perdedoras', () => {
     expect(de(6, 103)).toMatchObject({ resultado: 'Ganó', comentario: expect.stringMatching(/^Reasignado/) });
     expect(de(7, 101).comentario).toBe('Ganó el activo pero desistió (Falta de pago).');
     expect(de(8, 106)).toMatchObject({ resultado: 'Pendiente', comentario: 'El activo todavía no fue adjudicado.' });
+  });
+
+  // Carlos (103) y Ana (106) tienen el mismo nivel y la misma fecha de ingreso
+  it('marca a los empatados de un activo en evaluación y deja atrás al resto (F14)', () => {
+    const lista = [oferta(9, 103, 200), oferta(9, 106, 200), oferta(9, 101, 150)];
+    const ev = explicarOfertas(lista, [resultado(9, null, 'En evaluación')], nomina, []);
+    const por = (c: number) => ev.find((e) => e.oferta.id_colaborador === c)!;
+    expect(por(103)).toMatchObject({ resultado: 'Pendiente', comentario: textoCriterio('REQUIERE EVALUACION') });
+    expect(por(106)).toMatchObject({ resultado: 'Pendiente', comentario: textoCriterio('REQUIERE EVALUACION') });
+    expect(por(101)).toMatchObject({ resultado: 'Perdió', comentario: 'Quedó detrás de los postores empatados que evalúa el comité.' });
+  });
+
+  it('explica la adjudicación por decisión del comité', () => {
+    const lista = [oferta(10, 103, 300), oferta(10, 106, 300)];
+    const r = { ...resultado(10, 106), criterio_desempate: 'ADJUDICADO POR DECISION DEL COMITE' };
+    const ev = explicarOfertas(lista, [r], nomina, []);
+    const por = (c: number) => ev.find((e) => e.oferta.id_colaborador === c)!;
+    expect(por(106)).toMatchObject({ resultado: 'Ganó', comentario: textoCriterio('ADJUDICADO POR DECISION DEL COMITE') });
+    expect(por(103).comentario).toBe('Empató en monto, jerarquía y antigüedad, y el comité adjudicó el activo a otro postor.');
   });
 
   it('dice que fue la única oferta válida cuando no hubo otro postor elegible', () => {

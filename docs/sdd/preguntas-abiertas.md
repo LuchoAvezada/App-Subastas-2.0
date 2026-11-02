@@ -24,6 +24,7 @@ Este documento registra las decisiones de negocio y alcance aprobadas por el res
 | **Q-09** | ¿Qué pasa con los activos que quedan sin ofertas al cierre? | F11 (Adjudicación) | Segunda ronda solo con los Disponibles, sin borrar la primera y con el tope por categoría de toda la subasta | `✅ Resuelta` |
 | **Q-10** | ¿Cómo se recupera una contraseña y cómo se bloquea un acceso? | F12 (Colaboradores) | Solo un administrador: restablecer borra la cuenta para registrarse de nuevo; bloquear es inhabilitar | `✅ Resuelta` |
 | **Q-11** | ¿Hace falta un segundo factor para registrar la cuenta? | F02 / F10 / F12 (Acceso) | No: el registro sigue solo con la cédula, por pedido del Directorio Ejecutivo (riesgo aceptado) | `✅ Resuelta` |
+| **Q-12** | ¿Qué pasa si dos postores empatan en monto, jerarquía y antigüedad? | F14 (Adjudicación) | El activo queda sin ganador, en evaluación; decide el comité y no se publica hasta resolverlo | `✅ Resuelta` |
 
 ---
 
@@ -157,3 +158,15 @@ Este documento registra las decisiones de negocio y alcance aprobadas por el res
 - **Impacto técnico:** ninguno; `registrar_nuevo_usuario` no cambia.
 - **Para qué feature:** F02 (Autenticación).
 - **Estado:** `✅ Resuelta` (2026-11-01)
+
+---
+
+### Q-12: Empate total en la adjudicación
+- **Contexto:** Con monto, jerarquía y antigüedad iguales, el sistema adjudicaba a quien registró primero la oferta ("GANADO POR REGISTRO DE OFERTA"), un criterio que no está en la constitución.
+- **Decisión adoptada:** **El activo no se adjudica: queda `En evaluación` y lo decide el comité.**
+  - Mientras tanto no tiene ganador y los empatados pueden ganar otros activos de la categoría.
+  - No se pueden publicar resultados con activos en evaluación.
+  - El admin registra la decisión con "Resolver" en Resultados; queda auditada.
+- **Impacto técnico:** `sql/24_evaluacion_comite.sql` (`candidatos_activo`, `resolver_evaluacion`, cambios en `procesar_ganadores`, `reasignar_por_desistimiento`, `publicar_resultados` y `leer_datos`).
+- **Para qué feature:** F14 (Empate Total: Evaluación del Comité).
+- **Estado:** `✅ Resuelta` (2026-11-02)

@@ -9,7 +9,7 @@ import ExcelJS from 'exceljs';
 import { jsPDF } from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
 import { textoCriterio, type OfertaExplicada } from './explicacionOfertas';
-import type { ResultadoDetalle } from '../types/domain';
+import type { CandidatoEvaluacion, ResultadoDetalle } from '../types/domain';
 
 export interface ActivoReporte {
   id_activo: number;
@@ -44,17 +44,20 @@ async function logoPng(): Promise<string | null> {
 /**
  * PDF para el comité (spec 013, RF-01): por activo, ID, nombre, descripción y FAM;
  * del ganador, nombre, cargo y por qué ganó. Sin montos ni cédulas; sin desiertos.
+ * Los empates totales van aparte, con los postores entre los que decide el comité (F14).
  */
 export async function descargarPdfComite(
   resultados: ResultadoDetalle[],
   explicadas: OfertaExplicada[],
   activos: Map<number, ActivoReporte>,
-  categoria: string
+  categoria: string,
+  evaluaciones: CandidatoEvaluacion[]
 ) {
   const ganadoras = new Map(
     explicadas.filter((e) => e.resultado === 'Ganó').map((e) => [e.oferta.id_activo, e])
   );
-  const conGanador = resultados.filter((r) => r.id_colaborador_ganador && r.estado_adjudicacion !== 'Desierto');
+  const conGanador = resultados.filter((r) => r.id_colaborador_ganador);
+  const enEvaluacion = resultados.filter((r) => r.estado_adjudicacion === 'En evaluación');
   const categorias = [...new Set(conGanador.map((r) => r.categoria))].sort((a, b) => a.localeCompare(b));
 
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
@@ -74,7 +77,9 @@ export async function descargarPdfComite(
   doc.text(
     [
       `Listado para validación del Comité${categoria ? ` — Categoría ${categoria}` : ''}`,
-      `${conGanador.length} ${conGanador.length === 1 ? 'activo adjudicado' : 'activos adjudicados'} · Generado el ${format(new Date(), 'dd/MM/yyyy HH:mm')}`,
+      `${conGanador.length} ${conGanador.length === 1 ? 'activo adjudicado' : 'activos adjudicados'}` +
+        (enEvaluacion.length ? ` · ${enEvaluacion.length} en evaluación` : '') +
+        ` · Generado el ${format(new Date(), 'dd/MM/yyyy HH:mm')}`,
     ],
     ancho - 14,
     20.5,
@@ -122,6 +127,41 @@ export async function descargarPdfComite(
     y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 7;
   }
 
+  if (enEvaluacion.length) {
+    const AMBAR: [number, number, number] = [146, 64, 14];
+    autoTable(doc, {
+      startY: y,
+      head: [
+        [{ content: `Requieren evaluación del comité (${enEvaluacion.length})`, colSpan: 6, styles: { fillColor: [254, 243, 199], textColor: AMBAR, fontSize: 10 } }],
+        ['ID', 'Activo', 'Descripción', 'FAM', 'Postores empatados', 'Motivo'],
+      ],
+      body: [...enEvaluacion]
+        .sort((a, b) => a.id_activo - b.id_activo)
+        .map((r) => [
+          `#${r.id_activo}`,
+          nombreActivo(r),
+          activos.get(r.id_activo)?.observacion || '—',
+          r.fam || '—',
+          evaluaciones
+            .filter((c) => c.id_activo === r.id_activo)
+            .map((c) => `${c.nombre} (${c.cargo})`)
+            .join('\n') || 'Ninguno puede ganarlo hoy',
+          textoCriterio('REQUIERE EVALUACION'),
+        ]),
+      theme: 'grid',
+      styles: { fontSize: 8, cellPadding: 1.8, lineColor: [228, 228, 228], lineWidth: 0.1, valign: 'top' },
+      headStyles: { fillColor: AMBAR, textColor: 255, fontStyle: 'bold' },
+      columnStyles: {
+        0: { cellWidth: 13 },
+        1: { cellWidth: 38, fontStyle: 'bold' },
+        2: { cellWidth: 60 },
+        3: { cellWidth: 20 },
+        4: { cellWidth: 76 },
+      },
+      margin: { left: 14, right: 14, bottom: 18 },
+    });
+  }
+
   // Pie: reglas de adjudicación y numeración
   const paginas = doc.getNumberOfPages();
   for (let p = 1; p <= paginas; p++) {
@@ -129,7 +169,7 @@ export async function descargarPdfComite(
     doc.setFontSize(7.5);
     doc.setTextColor(110);
     doc.text(
-      'Prelación: 1) mayor monto, 2) mayor jerarquía de cargo, 3) mayor antigüedad, 4) oferta registrada primero. Máximo un activo por categoría por colaborador.',
+      'Prelación: 1) mayor monto, 2) mayor jerarquía de cargo, 3) mayor antigüedad; con empate en los tres decide el comité. Máximo un activo por categoría por colaborador.',
       14,
       alto - 9
     );
@@ -208,7 +248,11 @@ export async function descargarExcelOfertas(
       fila.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5F5' } };
     }
     fila.getCell('res').font =
-      e.resultado === 'Ganó' ? { bold: true, color: { argb: 'FF1C5A34' } } : { color: { argb: 'FF555555' } };
+      e.resultado === 'Ganó'
+        ? { bold: true, color: { argb: 'FF1C5A34' } }
+        : e.resultado === 'Pendiente'
+          ? { bold: true, color: { argb: 'FF92400E' } }
+          : { color: { argb: 'FF555555' } };
   }
   encabezar(ws);
 
@@ -251,7 +295,11 @@ export async function descargarExcelOfertas(
       ganador: conGanador ? r.colaborador_ganador : '',
       cargo: conGanador ? (g?.oferta.cargo ?? '') : '',
       monto: conGanador ? Number(r.monto_final) : null,
-      motivo: conGanador ? (g?.comentario ?? textoCriterio(r.criterio_desempate)) : (r?.motivo_desistimiento ?? ''),
+      motivo: conGanador
+        ? (g?.comentario ?? textoCriterio(r.criterio_desempate))
+        : r?.estado_adjudicacion === 'En evaluación'
+          ? textoCriterio(r.criterio_desempate)
+          : (r?.motivo_desistimiento ?? ''),
     });
   }
   encabezar(resumen);

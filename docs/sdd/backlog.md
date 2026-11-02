@@ -22,6 +22,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 | **F11** | Adjudicación por Rondas (segunda ronda con activos sin ofertas) | F06, F07 | Ninguna | Medio | Alto | Bajo | `🚀 Desplegada, falta prueba manual` |
 | **F12** | Restablecer Contraseña y Bloquear Acceso desde Colaboradores | F08, F09 | Ninguna | Medio | Alto | Bajo | `🚀 Desplegada, falta prueba manual` |
 | **F13** | Post-subasta: PDF para el comité, Excel de ofertas y ajustes de Resultados | F07, F11 | Ninguna | Medio | Alto | Medio | `🚀 Desplegada, falta prueba manual` |
+| **F14** | Empate total: evaluación del comité | F06, F13 | Ninguna | Medio | Alto | Bajo | `🛠️ Implementada, pendiente de despliegue` |
 
 ---
 
@@ -194,3 +195,13 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
   - Las pestañas de categorías muestran solo activos Disponibles.
   - Resultados se filtra por categoría; los totales solo los ve un admin.
   - El criterio "GANADO POR TOPE DE CATEGORIA" reemplaza a los desempates mal calculados cuando el mejor postor ya tenía otro activo de la categoría.
+
+---
+
+### F14: Empate Total: Evaluación del Comité (🛠️ Implementada, pendiente de despliegue)
+- **Objetivo:** Que un empate en monto, jerarquía y antigüedad no se resuelva por la hora de la oferta: el activo queda en evaluación y el admin registra la decisión del comité.
+- **Especificación:** `specs/014-evaluacion-comite/`.
+- **Criterios de Aceptación:**
+  - El empate total deja el activo sin ganador, en evaluación.
+  - No se publican resultados con activos en evaluación.
+  - "Resolver" en Resultados adjudica al empatado que eligió el comité, con auditoría.

@@ -109,10 +109,13 @@ export function PanelEvaluacion() {
   const handleEjecutarAdjudicacion = async () => {
     setProcessing(true);
     try {
-      // Adjudicar borra y recalcula los resultados: el servidor exige token de administrador
-      const res = await rpc<{ total_adjudicados: number }>('procesar_ganadores');
+      // Adjudica lo que sigue Disponible (no toca rondas anteriores); exige token de administrador
+      const res = await rpc<{ total_adjudicados: number; total_en_evaluacion: number }>('procesar_ganadores');
       if (res.success) {
         toast.success(`¡Proceso completado! Se adjudicaron ${res.total_adjudicados || 0} activos.`);
+        if (res.total_en_evaluacion) {
+          toast.info(`${res.total_en_evaluacion} con empate total: requieren evaluación del comité en Resultados.`);
+        }
         setIsProcessModalOpen(false);
         navigate('/resultados');
       } else {

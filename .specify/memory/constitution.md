@@ -85,6 +85,7 @@
     1. Mayor monto ofertado.
     2. Menor nivel de jerarquía (nivel 1 = mayor jerarquía).
     3. Mayor antigüedad en Agrotec (menor fecha de ingreso).
+    4. Empate en los tres criterios: el activo no se adjudica automáticamente; lo decide el comité (F14).
   - **Reasignación automática:** Ante desistimiento de un adjudicatario, el administrador acciona la opción en el sistema y la plataforma promueve automáticamente al siguiente postor elegible del ranking respetando las reglas de equidad.
 - **Motivo:** Garantizar absoluta justicia, transparencia y confianza entre todos los colaboradores participantes de la empresa.
 

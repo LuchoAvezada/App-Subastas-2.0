@@ -98,8 +98,17 @@ export interface ResultadoDetalle {
   criterio_desempate: string;
   fecha_cierre_display: string;
   fecha_cierre: string;
-  estado_adjudicacion?: 'Adjudicado' | 'Desistido' | 'Reasignado' | 'Desierto';
+  estado_adjudicacion?: 'Adjudicado' | 'Desistido' | 'Reasignado' | 'Desierto' | 'En evaluación';
   motivo_desistimiento?: string | null;
+}
+
+/** Postor empatado de un activo en evaluación del comité (leer_datos 'evaluaciones', F14) */
+export interface CandidatoEvaluacion {
+  id_activo: number;
+  id_colaborador: number;
+  nombre: string;
+  cargo: string;
+  monto: number;
 }
 
 /** Collaborator data from view */

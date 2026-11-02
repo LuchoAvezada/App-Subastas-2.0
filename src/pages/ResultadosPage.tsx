@@ -21,12 +21,19 @@ import {
   FilePdfIcon,
   FileXlsIcon,
   MedalIcon,
+  ScalesIcon,
   TrophyIcon,
   UserMinusIcon,
   WarningIcon,
 } from '@phosphor-icons/react';
-import type { OfertaRecibida, ResultadoDetalle } from '../types/domain';
+import type { CandidatoEvaluacion, OfertaRecibida, ResultadoDetalle } from '../types/domain';
 import type { ColaboradorInput } from '../lib/adjudicacion';
+
+// Criterios de F14 con su ortografía para mostrar (en la base van sin tildes, como el resto)
+const ETIQUETA_CRITERIO: Record<string, string> = {
+  'REQUIERE EVALUACION': 'REQUIERE EVALUACIÓN',
+  'ADJUDICADO POR DECISION DEL COMITE': 'ADJUDICADO POR DECISIÓN DEL COMITÉ',
+};
 
 export function ResultadosPage() {
   const { usuario, logout } = useAuth();
@@ -38,6 +45,12 @@ export function ResultadosPage() {
   const [loading, setLoading] = useState(true);
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [generando, setGenerando] = useState<'pdf' | 'excel' | null>(null);
+
+  // Empate total (F14): el admin registra a quién adjudicó el comité
+  const [evaluando, setEvaluando] = useState<ResultadoDetalle | null>(null);
+  const [candidatos, setCandidatos] = useState<CandidatoEvaluacion[] | null>(null);
+  const [elegido, setElegido] = useState<number | null>(null);
+  const [resolviendo, setResolviendo] = useState(false);
 
   // Modales
   const [desistimientoModalOpen, setDesistimientoModalOpen] = useState(false);
@@ -78,14 +91,15 @@ export function ResultadosPage() {
   const handleGenerarReporte = async (tipo: 'pdf' | 'excel') => {
     setGenerando(tipo);
     try {
-      const [ofertas, nomina, desistimientos, { data: activos, error }, reportes] = await Promise.all([
+      const [ofertas, nomina, desistimientos, evaluaciones, { data: activos, error }, reportes] = await Promise.all([
         rpc<{ filas: OfertaRecibida[] }>('leer_datos', { p_consulta: 'ofertas' }),
         rpc<{ filas: ColaboradorInput[] }>('leer_datos', { p_consulta: 'nomina' }),
         rpc<{ filas: Desistimiento[] }>('leer_datos', { p_consulta: 'desistimientos' }),
+        rpc<{ filas: CandidatoEvaluacion[] }>('leer_datos', { p_consulta: 'evaluaciones' }),
         supabase.from('sub_activos').select('id_activo, observacion, estado'),
         import('../lib/reportesPostSubasta'),
       ]);
-      for (const res of [ofertas, nomina, desistimientos]) {
+      for (const res of [ofertas, nomina, desistimientos, evaluaciones]) {
         if (!res.success) throw new Error(res.error);
       }
       if (error) throw error;
@@ -99,7 +113,7 @@ export function ResultadosPage() {
       const mapaActivos = new Map((activos as ActivoReporte[]).map((a) => [a.id_activo, a]));
 
       if (tipo === 'pdf') {
-        await reportes.descargarPdfComite(visibles, explicadas, mapaActivos, filtroCategoria);
+        await reportes.descargarPdfComite(visibles, explicadas, mapaActivos, filtroCategoria, evaluaciones.filas ?? []);
       } else {
         await reportes.descargarExcelOfertas(visibles, explicadas, mapaActivos, filtroCategoria);
       }
@@ -109,6 +123,36 @@ export function ResultadosPage() {
       toast.error('No fue posible generar el reporte.');
     } finally {
       setGenerando(null);
+    }
+  };
+
+  const abrirEvaluacion = async (r: ResultadoDetalle) => {
+    setEvaluando(r);
+    setCandidatos(null);
+    setElegido(null);
+    const res = await rpc<{ filas: CandidatoEvaluacion[] }>('leer_datos', { p_consulta: 'evaluaciones' });
+    if (!res.success) {
+      toast.error(res.error || 'No fue posible leer los postores empatados.');
+      setEvaluando(null);
+      return;
+    }
+    setCandidatos((res.filas ?? []).filter((c) => c.id_activo === r.id_activo));
+  };
+
+  const handleResolverEvaluacion = async () => {
+    if (!evaluando || elegido === null) return;
+    setResolviendo(true);
+    try {
+      const res = await rpc('resolver_evaluacion', { p_id_activo: evaluando.id_activo, p_id_colaborador: elegido });
+      if (res.success) {
+        toast.success(res.message || 'Adjudicación registrada.');
+        setEvaluando(null);
+        await fetchResultados();
+      } else {
+        toast.error(res.error || 'No se pudo registrar la decisión del comité.');
+      }
+    } finally {
+      setResolviendo(false);
     }
   };
 
@@ -149,7 +193,10 @@ export function ResultadosPage() {
     }
   };
 
-  const totalRecaudado = visibles.reduce((acc, curr) => acc + Number(curr.monto_final), 0);
+  // Totales solo con lo que tiene ganador (sin desiertos ni activos en evaluación)
+  const adjudicados = visibles.filter((r) => r.id_colaborador_ganador);
+  const totalRecaudado = adjudicados.reduce((acc, curr) => acc + Number(curr.monto_final), 0);
+  const enEvaluacion = resultados.filter((r) => r.estado_adjudicacion === 'En evaluación').length;
 
   // REDIRECCIÓN SILENCIOSA SI NO ESTÁ PUBLICADO Y NO ES ADMIN
   if (!canView) {
@@ -213,6 +260,22 @@ export function ResultadosPage() {
         </div>
       )}
 
+      {/* Empates totales pendientes de decisión del comité (F14) */}
+      {usuario?.es_admin && enEvaluacion > 0 && (
+        <div className="p-4 rounded-2xl border border-amber-300 bg-amber-50 text-amber-950 flex items-start gap-3" role="status">
+          <ScalesIcon className="w-[22px] h-[22px] text-amber-700 shrink-0 mt-0.5" />
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wider">
+              {enEvaluacion} {enEvaluacion === 1 ? 'activo requiere' : 'activos requieren'} evaluación del comité
+            </div>
+            <p className="text-xs text-amber-900/80 mt-0.5">
+              Empataron en monto, jerarquía y antigüedad. Registre la decisión del comité con "Resolver"; hasta entonces
+              no se pueden publicar los resultados.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200/80">
         <div>
@@ -272,7 +335,7 @@ export function ResultadosPage() {
           <div className="p-5 rounded-2xl bg-white border border-gray-200/80 shadow-sm flex items-center justify-between">
             <div>
               <span className="text-xs font-semibold text-gray-500 block">Total Activos Adjudicados</span>
-              <span className="text-2xl font-black text-gray-900 mt-1 block">{visibles.length}</span>
+              <span className="text-2xl font-black text-gray-900 mt-1 block">{adjudicados.length}</span>
             </div>
             <div className="p-3 bg-agrotec-50 rounded-2xl text-agrotec-800">
               <CheckCircleIcon className="w-6 h-6" />
@@ -323,9 +386,13 @@ export function ResultadosPage() {
                 {visibles.map((r) => {
                   const estado = r.estado_adjudicacion || 'Adjudicado';
                   const isDesierto = estado === 'Desierto';
+                  const isEvaluacion = estado === 'En evaluación';
 
                   return (
-                    <tr key={r.id_resultado} className="hover:bg-gray-50/60 transition-colors">
+                    <tr
+                      key={r.id_resultado}
+                      className={isEvaluacion ? 'bg-amber-50/70 hover:bg-amber-50' : 'hover:bg-gray-50/60 transition-colors'}
+                    >
                       <td className="py-3.5 px-4">
                         <div className="font-bold text-gray-900">
                           {r.marca} {r.modelo}
@@ -340,7 +407,12 @@ export function ResultadosPage() {
                         </span>
                       </td>
                       <td className="py-3.5 px-4">
-                        {isDesierto ? (
+                        {isEvaluacion ? (
+                          <>
+                            <div className="font-bold text-amber-800">REQUIERE EVALUACIÓN</div>
+                            <div className="text-xs text-amber-900/70">Empate total: decide el comité</div>
+                          </>
+                        ) : isDesierto ? (
                           <div className="font-bold text-rose-700 italic">Sin Adjudicar (Desierto)</div>
                         ) : (
                           <>
@@ -366,7 +438,7 @@ export function ResultadosPage() {
                             {estado}
                           </span>
                           <span className="text-[11px] text-gray-500">
-                            {r.criterio_desempate}
+                            {ETIQUETA_CRITERIO[r.criterio_desempate] ?? r.criterio_desempate}
                           </span>
                         </div>
                       </td>
@@ -377,7 +449,18 @@ export function ResultadosPage() {
                       {/* Acción de Gestión de Desistimiento exclusiva para Admins */}
                       {usuario?.es_admin && (
                         <td className="py-3.5 px-4 text-right">
-                          {!isDesierto && (
+                          {isEvaluacion && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-amber-900 border-amber-300 bg-white hover:bg-amber-100 text-xs py-1 px-2.5"
+                              leftIcon={<ScalesIcon className="w-4 h-4 text-amber-700" />}
+                              onClick={() => abrirEvaluacion(r)}
+                            >
+                              Resolver
+                            </Button>
+                          )}
+                          {!isDesierto && !isEvaluacion && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -405,6 +488,83 @@ export function ResultadosPage() {
       )}
 
 
+
+      {/* Modal Resolver Empate Total (F14) */}
+      {evaluando && (
+        <Modal
+          isOpen
+          onClose={() => !resolviendo && setEvaluando(null)}
+          title={
+            <span className="flex items-center gap-2 text-amber-900">
+              <ScalesIcon className="w-[22px] h-[22px] text-amber-700" />
+              <span>Resolver empate total</span>
+            </span>
+          }
+          description="Registre a quién adjudicó el comité este activo."
+          size="md"
+        >
+          <div className="space-y-4 text-xs text-gray-700 leading-relaxed">
+            <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-950 space-y-1">
+              <p className="font-bold text-sm">
+                #{evaluando.id_activo} · {evaluando.marca} {evaluando.modelo}
+              </p>
+              <p className="text-xs text-amber-900">
+                Empataron en monto ({formatUSD(evaluando.monto_final)}), jerarquía y antigüedad.
+              </p>
+            </div>
+
+            {candidatos === null ? (
+              <div className="flex justify-center py-4"><Spinner label="Cargando postores empatados..." /></div>
+            ) : candidatos.length === 0 ? (
+              <p className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700">
+                Ninguno de los empatados puede ganarlo hoy (ya tienen otro activo de la categoría o desistieron).
+                Para volver a ofertarlo, cambie el activo a Disponible en Activos y procese una nueva ronda.
+              </p>
+            ) : (
+              <fieldset className="space-y-2">
+                <legend className="font-bold text-gray-700 mb-1.5">Postor adjudicado por el comité:</legend>
+                {candidatos.map((c) => (
+                  <label
+                    key={c.id_colaborador}
+                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer ${
+                      elegido === c.id_colaborador ? 'border-agrotec-600 bg-agrotec-50' : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="candidato"
+                      className="accent-[#1C5A34]"
+                      checked={elegido === c.id_colaborador}
+                      onChange={() => setElegido(c.id_colaborador)}
+                    />
+                    <span>
+                      <span className="block font-bold text-gray-900 text-sm">{c.nombre}</span>
+                      <span className="block text-gray-500">{c.cargo}</span>
+                    </span>
+                  </label>
+                ))}
+                <p className="text-[11px] text-gray-500 pt-1">
+                  Solo figuran quienes hoy pueden ganarlo: sin otro activo de la categoría ni desistimiento en este activo.
+                </p>
+              </fieldset>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+              <Button variant="outline" disabled={resolviendo} onClick={() => setEvaluando(null)}>
+                Cancelar
+              </Button>
+              <Button
+                isLoading={resolviendo}
+                disabled={elegido === null}
+                leftIcon={<ScalesIcon className="w-[18px] h-[18px]" />}
+                onClick={handleResolverEvaluacion}
+              >
+                Confirmar adjudicación
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Modal Registrar Desistimiento de Ganador */}
       {desistimientoModalOpen && activoDesistimiento && (

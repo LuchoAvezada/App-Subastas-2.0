@@ -62,7 +62,8 @@ Construir una plataforma web interna y privada para Agrotec S.A. destinada a la 
    - Criterio 1: Mayor monto ofertado.
    - Criterio 2 (Desempate por jerarquía): Menor número de `nivel_jerarquia` (nivel 1 = mayor jerarquía).
    - Criterio 3 (Desempate por antigüedad): Menor `fecha_ingreso` (empleado más antiguo en Agrotec).
-   - Registro auditable del criterio de adjudicación (`GANADO POR OFERTA MAS ALTA`, `GANADO POR JERARQUIA`, `GANADO POR ANTIGUEDAD`).
+   - Empate en los tres criterios: el activo queda `REQUIERE EVALUACION` y lo adjudica el comité (F14).
+   - Registro auditable del criterio de adjudicación (`GANADO POR OFERTA MAS ALTA`, `GANADO POR JERARQUIA`, `GANADO POR ANTIGUEDAD`, `GANADO POR TOPE DE CATEGORIA`, `ADJUDICADO POR DECISION DEL COMITE`).
 5. **Panel Administrativo y Gestión de Resultados:**
    - CRUD de activos y subida de imágenes a Supabase Storage (Q-04).
    - Gestión y visualización de colaboradores habilitados.

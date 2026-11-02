@@ -42,12 +42,15 @@ export type CriterioDesempate =
   | 'GANADO POR OFERTA MAS ALTA'
   | 'GANADO POR JERARQUIA'
   | 'GANADO POR ANTIGUEDAD'
-  | 'GANADO POR REGISTRO DE OFERTA'
-  | 'GANADO POR TOPE DE CATEGORIA';
+  | 'GANADO POR REGISTRO DE OFERTA' // solo en resultados anteriores a F14
+  | 'GANADO POR TOPE DE CATEGORIA'
+  | 'REQUIERE EVALUACION'
+  | 'ADJUDICADO POR DECISION DEL COMITE';
 
 export interface ResultadoAdjudicacion {
   id_activo: number;
-  id_colaborador_ganador: number;
+  /** null mientras el activo está en evaluación del comité (F14). */
+  id_colaborador_ganador: number | null;
   monto_final: number;
   criterio_desempate: CriterioDesempate;
 }
@@ -91,6 +94,18 @@ export function compararPostores(a: PostorEnriquecido, b: PostorEnriquecido): nu
 }
 
 /**
+ * Empate en monto, jerarquía y antigüedad: la fecha de la oferta ya no desempata,
+ * el activo lo adjudica el comité (F14).
+ */
+export function empateTotal(a: PostorEnriquecido, b: PostorEnriquecido): boolean {
+  return (
+    a.monto === b.monto &&
+    a.nivel_jerarquia === b.nivel_jerarquia &&
+    new Date(a.fecha_ingreso).getTime() === new Date(b.fecha_ingreso).getTime()
+  );
+}
+
+/**
  * Determina el criterio formal de adjudicación comparando el ganador con el mejor
  * de los demás postores elegibles del activo.
  */
@@ -118,7 +133,8 @@ export function clasificarCriterio(ganador: PostorEnriquecido, segundo?: PostorE
     return 'GANADO POR ANTIGUEDAD';
   }
 
-  return 'GANADO POR REGISTRO DE OFERTA';
+  // Empate total sin evaluación: el otro ya tenía un activo de la categoría (F14)
+  return 'GANADO POR TOPE DE CATEGORIA';
 }
 
 /**
@@ -191,6 +207,8 @@ export function procesarAdjudicacion(
 
     // Activos pendientes de asignar en esta categoría
     const activosPendientesIds = new Set<number>(activosEnCategoria.map((a) => a.id_activo));
+    // Activos con empate total: sin ganador, los decide el comité (F14)
+    const enEvaluacion = new Map<number, number>(); // id_activo -> monto empatado
 
     let hayCambios = true;
     while (hayCambios && activosPendientesIds.size > 0) {
@@ -203,8 +221,14 @@ export function procesarAdjudicacion(
 
       for (const idActivo of activosPendientesIds) {
         const postores = postoresPorActivo.get(idActivo) || [];
-        // Buscar el primer postor que aún no haya alcanzado el tope en esta categoría
-        const postorElegible = postores.find((p) => !colaboradoresAsignados.has(p.id_colaborador));
+        // Los dos primeros postores que aún no alcanzaron el tope en esta categoría
+        const [postorElegible, siguiente] = postores.filter((p) => !colaboradoresAsignados.has(p.id_colaborador));
+
+        if (postorElegible && siguiente && empateTotal(postorElegible, siguiente)) {
+          enEvaluacion.set(idActivo, postorElegible.monto);
+          activosPendientesIds.delete(idActivo);
+          continue;
+        }
 
         if (postorElegible) {
           postoresTentativos.set(idActivo, postorElegible);
@@ -305,6 +329,15 @@ export function procesarAdjudicacion(
         id_colaborador_ganador: ganador.id_colaborador,
         monto_final: ganador.monto,
         criterio_desempate: criterio,
+      });
+    }
+
+    for (const [idActivo, monto] of enEvaluacion) {
+      resultadosTotales.push({
+        id_activo: idActivo,
+        id_colaborador_ganador: null,
+        monto_final: monto,
+        criterio_desempate: 'REQUIERE EVALUACION',
       });
     }
   }

@@ -112,10 +112,10 @@ CREATE TABLE IF NOT EXISTS sub_resultados (
     motivo_desistimiento      TEXT,
     fecha_actualizacion       TIMESTAMP DEFAULT NOW(),
 
-    -- 'Desierto' si y solo si no hay ganador
+    -- Sin ganador si y solo si está Desierto o en evaluación del comité (F14)
     CONSTRAINT chk_resultados_estado CHECK (
-        estado_adjudicacion IN ('Adjudicado', 'Reasignado', 'Desierto')
-        AND (estado_adjudicacion = 'Desierto') = (id_colaborador_ganador IS NULL)
+        estado_adjudicacion IN ('Adjudicado', 'Reasignado', 'Desierto', 'En evaluación')
+        AND (estado_adjudicacion IN ('Desierto', 'En evaluación')) = (id_colaborador_ganador IS NULL)
     )
 );
 
@@ -493,6 +493,7 @@ DECLARE
     v_conflicto RECORD;
     v_mejor_activo INTEGER;
     v_total_adjudicados INTEGER;
+    v_total_evaluacion INTEGER;
     v_ganador RECORD;
     v_segundo RECORD;
     v_primero INTEGER;
@@ -505,7 +506,7 @@ BEGIN
     WHERE id_activo IN (SELECT id_activo FROM sub_activos WHERE estado = 'Disponible');
 
     CREATE TEMP TABLE temp_ofertas_eval_orig ON COMMIT DROP AS
-    SELECT 
+    SELECT
         o.id_oferta, o.id_activo, o.id_colaborador, o.monto, o.fecha_hora,
         a.id_categoria, ca.nivel_jerarquia, c.fecha_ingreso
     FROM sub_ofertas o
@@ -533,6 +534,14 @@ BEGIN
         PRIMARY KEY (id_colaborador, id_categoria)
     ) ON COMMIT DROP;
 
+    -- Empate total (monto, jerarquía y antigüedad) entre los dos primeros postores:
+    -- el activo no se adjudica y queda En evaluación para que decida el comité (F14).
+    -- Los empatados no quedan bloqueados en la categoría.
+    CREATE TEMP TABLE temp_activos_evaluacion (
+        id_activo INTEGER PRIMARY KEY,
+        monto NUMERIC
+    ) ON COMMIT DROP;
+
     -- El tope de 1 por categoría vale para toda la subasta: quien ya ganó en una
     -- ronda anterior no puede ganar otro activo de esa categoría.
     INSERT INTO temp_colaborador_categoria_bloqueado (id_colaborador, id_categoria)
@@ -542,40 +551,53 @@ BEGIN
     WHERE r.id_colaborador_ganador IS NOT NULL;
 
     FOR v_cat IN
-        SELECT DISTINCT id_categoria 
-        FROM temp_ofertas_eval 
-        ORDER BY id_categoria 
+        SELECT DISTINCT id_categoria
+        FROM temp_ofertas_eval
+        ORDER BY id_categoria
     LOOP
         v_cambios := true;
         WHILE v_cambios LOOP
             v_cambios := false;
 
+            DROP TABLE IF EXISTS temp_ranking;
+            CREATE TEMP TABLE temp_ranking ON COMMIT DROP AS
+            SELECT
+                t.id_activo, t.id_colaborador, t.monto, t.id_oferta,
+                t.nivel_jerarquia, t.fecha_ingreso,
+                ROW_NUMBER() OVER (
+                    PARTITION BY t.id_activo
+                    ORDER BY
+                        t.monto DESC,
+                        t.nivel_jerarquia ASC,
+                        t.fecha_ingreso ASC,
+                        t.fecha_hora ASC,
+                        t.id_oferta ASC
+                ) AS rn
+            FROM temp_ofertas_eval t
+            WHERE t.id_categoria = v_cat.id_categoria
+              AND t.id_activo NOT IN (SELECT id_activo FROM temp_ganadores_asignados)
+              AND t.id_activo NOT IN (SELECT id_activo FROM temp_activos_evaluacion)
+              AND t.id_colaborador NOT IN (
+                  SELECT id_colaborador
+                  FROM temp_colaborador_categoria_bloqueado
+                  WHERE id_categoria = v_cat.id_categoria
+              );
+
+            INSERT INTO temp_activos_evaluacion (id_activo, monto)
+            SELECT p.id_activo, p.monto
+            FROM temp_ranking p
+            JOIN temp_ranking s ON s.id_activo = p.id_activo AND s.rn = 2
+            WHERE p.rn = 1
+              AND s.monto = p.monto
+              AND s.nivel_jerarquia = p.nivel_jerarquia
+              AND s.fecha_ingreso = p.fecha_ingreso;
+
             DROP TABLE IF EXISTS temp_lideres_tentativos;
             CREATE TEMP TABLE temp_lideres_tentativos ON COMMIT DROP AS
-            WITH ranking_candidatos AS (
-                SELECT 
-                    t.id_activo, t.id_colaborador, t.monto, t.id_oferta,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY t.id_activo
-                        ORDER BY 
-                            t.monto DESC,
-                            t.nivel_jerarquia ASC,
-                            t.fecha_ingreso ASC,
-                            t.fecha_hora ASC,
-                            t.id_oferta ASC
-                    ) AS rn
-                FROM temp_ofertas_eval t
-                WHERE t.id_categoria = v_cat.id_categoria
-                  AND t.id_activo NOT IN (SELECT id_activo FROM temp_ganadores_asignados)
-                  AND t.id_colaborador NOT IN (
-                      SELECT id_colaborador 
-                      FROM temp_colaborador_categoria_bloqueado 
-                      WHERE id_categoria = v_cat.id_categoria
-                  )
-            )
             SELECT id_activo, id_colaborador, monto, id_oferta
-            FROM ranking_candidatos
-            WHERE rn = 1;
+            FROM temp_ranking
+            WHERE rn = 1
+              AND id_activo NOT IN (SELECT id_activo FROM temp_activos_evaluacion);
 
             IF NOT EXISTS (SELECT 1 FROM temp_lideres_tentativos) THEN
                 EXIT;
@@ -623,7 +645,7 @@ BEGIN
     END LOOP;
 
     FOR v_ganador IN
-        SELECT 
+        SELECT
             g.id_activo, g.id_colaborador, g.monto,
             orig.nivel_jerarquia, orig.fecha_ingreso, orig.fecha_hora
         FROM temp_ganadores_asignados g
@@ -635,7 +657,7 @@ BEGIN
         SELECT id_colaborador INTO v_primero
         FROM temp_ofertas_eval_orig
         WHERE id_activo = v_ganador.id_activo
-        ORDER BY 
+        ORDER BY
             monto DESC,
             nivel_jerarquia ASC,
             fecha_ingreso ASC,
@@ -648,7 +670,7 @@ BEGIN
         FROM temp_ofertas_eval_orig
         WHERE id_activo = v_ganador.id_activo
           AND id_colaborador <> v_ganador.id_colaborador
-        ORDER BY 
+        ORDER BY
             monto DESC,
             nivel_jerarquia ASC,
             fecha_ingreso ASC,
@@ -667,29 +689,43 @@ BEGIN
         ELSIF v_ganador.fecha_ingreso < v_segundo.fecha_ingreso THEN
             v_criterio := 'GANADO POR ANTIGUEDAD';
         ELSE
-            v_criterio := 'GANADO POR REGISTRO DE OFERTA';
+            -- Empate total que no pasó a evaluación: el otro postor ya tenía un
+            -- activo de esta categoría (F14)
+            v_criterio := 'GANADO POR TOPE DE CATEGORIA';
         END IF;
 
         INSERT INTO sub_resultados (id_activo, id_colaborador_ganador, monto_final, criterio_desempate)
         VALUES (v_ganador.id_activo, v_ganador.id_colaborador, v_ganador.monto, v_criterio);
     END LOOP;
 
+    -- Empates totales: sin ganador hasta que decida el comité (F14). El activo pasa a
+    -- Cerrado para que no reciba ofertas ni se vuelva a procesar en otra ronda.
+    INSERT INTO sub_resultados (id_activo, id_colaborador_ganador, monto_final, criterio_desempate, estado_adjudicacion)
+    SELECT id_activo, NULL, monto, 'REQUIERE EVALUACION', 'En evaluación'
+    FROM temp_activos_evaluacion;
+
+    UPDATE sub_activos
+    SET estado = 'Cerrado'
+    WHERE id_activo IN (SELECT id_activo FROM temp_activos_evaluacion);
+
     UPDATE sub_activos
     SET estado = 'Adjudicado'
     WHERE id_activo IN (SELECT id_activo FROM temp_ganadores_asignados);
 
-    -- Adjudicados en esta ronda
+    -- Adjudicados y en evaluación en esta ronda
     SELECT COUNT(*) INTO v_total_adjudicados FROM temp_ganadores_asignados;
+    SELECT COUNT(*) INTO v_total_evaluacion FROM temp_activos_evaluacion;
 
     -- Ganadores nuevos: la publicación se pausa hasta que el admin los revise y vuelva a publicar
-    IF v_total_adjudicados > 0 THEN
+    IF v_total_adjudicados + v_total_evaluacion > 0 THEN
         UPDATE sub_app_config SET resultados_publicados = false WHERE id = 1;
     END IF;
 
     RETURN json_build_object(
         'success', true,
         'message', 'Adjudicación procesada exitosamente con tope por categoría y desempates.',
-        'total_adjudicados', v_total_adjudicados
+        'total_adjudicados', v_total_adjudicados,
+        'total_en_evaluacion', v_total_evaluacion
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -714,6 +750,12 @@ BEGIN
             'error', 'Debe indicar si los resultados se publican o se ocultan.');
     END IF;
 
+    -- Los empates totales los decide el comité antes de publicar (F14)
+    IF p_publicar AND EXISTS (SELECT 1 FROM sub_resultados WHERE estado_adjudicacion = 'En evaluación') THEN
+        RETURN json_build_object('success', false,
+            'error', 'Hay activos que requieren evaluación del comité. Resuélvalos en Resultados antes de publicar.');
+    END IF;
+
     UPDATE sub_app_config
     SET resultados_publicados = p_publicar
     WHERE id = 1;
@@ -734,7 +776,8 @@ BEGIN
 END;
 $$;
 
--- REASIGNAR POR DESISTIMIENTO (F07)
+-- REASIGNAR POR DESISTIMIENTO (F07). Con empate total entre los siguientes postores,
+-- el activo pasa a En evaluación (F14).
 CREATE OR REPLACE FUNCTION reasignar_por_desistimiento(
     p_token TEXT,
     p_id_activo INTEGER,
@@ -747,11 +790,10 @@ DECLARE
     v_ci_admin       VARCHAR(20);
     v_motivo         TEXT := NULLIF(BTRIM(p_motivo), '');
     v_resultado      sub_resultados%ROWTYPE;
-    v_id_categoria   INTEGER;
+    v_candidatos     INTEGER;
     v_nuevo_id       INTEGER;
     v_nuevo_monto    NUMERIC(10, 2);
     v_nuevo_nombre   TEXT;
-    v_hay_candidato  BOOLEAN;
     v_orden_postor   INTEGER;
 BEGIN
     v_ci_admin := validar_sesion_admin(p_token);
@@ -781,60 +823,30 @@ BEGIN
 
     IF v_resultado.id_colaborador_ganador IS NULL THEN
         RETURN json_build_object('success', false,
-            'error', 'El activo ya está Desierto: no hay ganador que pueda desistir.');
+            'error', 'El activo no tiene ganador que pueda desistir (está Desierto o en evaluación del comité).');
     END IF;
-
-    SELECT id_categoria INTO v_id_categoria
-    FROM sub_activos
-    WHERE id_activo = p_id_activo;
 
     -- 1. El ganador actual queda como Desistido de este activo
     INSERT INTO sub_desistimientos (id_activo, id_colaborador, monto, motivo, usuario)
     VALUES (p_id_activo, v_resultado.id_colaborador_ganador, v_resultado.monto_final, v_motivo, v_ci_admin)
     ON CONFLICT (id_activo, id_colaborador) DO NOTHING;
 
-    -- 2. Siguiente postor elegible, con el mismo orden de mérito que procesar_ganadores()
-    SELECT o.id_colaborador, o.monto, c.nombre
-    INTO v_nuevo_id, v_nuevo_monto, v_nuevo_nombre
-    FROM sub_ofertas o
-    JOIN sub_colaboradores c ON c.id_colaborador = o.id_colaborador
-    JOIN sub_cargos ca ON ca.id_cargo = c.id_cargo
-    WHERE o.id_activo = p_id_activo
-      AND c.habilitado = 'SI'
-      AND c.id_rol = 2
-      -- nadie que ya haya desistido de este activo (incluye al ganador actual)
-      AND NOT EXISTS (
-          SELECT 1
-          FROM sub_desistimientos d
-          WHERE d.id_activo = p_id_activo
-            AND d.id_colaborador = o.id_colaborador
-      )
-      -- tope F06: nadie que ya tenga otro activo de esta categoría
-      AND NOT EXISTS (
-          SELECT 1
-          FROM sub_resultados r2
-          JOIN sub_activos a2 ON a2.id_activo = r2.id_activo
-          WHERE a2.id_categoria = v_id_categoria
-            AND r2.id_activo <> p_id_activo
-            AND r2.id_colaborador_ganador = o.id_colaborador
-      )
-    ORDER BY
-        o.monto DESC,
-        ca.nivel_jerarquia ASC,
-        c.fecha_ingreso ASC,
-        o.fecha_hora ASC,
-        o.id_oferta ASC
-    LIMIT 1;
+    -- 2. Siguientes postores elegibles, con el mismo orden de mérito que procesar_ganadores()
+    --    (sin quienes desistieron de este activo ni quienes ya tienen otro de la categoría)
+    SELECT COUNT(*) INTO v_candidatos FROM candidatos_activo(p_id_activo);
 
-    v_hay_candidato := FOUND;  -- leer FOUND aquí: la próxima sentencia lo sobrescribe
+    SELECT id_colaborador, monto, nombre
+    INTO v_nuevo_id, v_nuevo_monto, v_nuevo_nombre
+    FROM candidatos_activo(p_id_activo)
+    LIMIT 1;
 
     -- Orden de adjudicación del nuevo ganador: 1 desistimiento → 2º postor, 2 → 3º, ...
     SELECT COUNT(*) + 1 INTO v_orden_postor
     FROM sub_desistimientos
     WHERE id_activo = p_id_activo;
 
-    -- 3. Reasignar o declarar desierto
-    IF v_hay_candidato THEN
+    -- 3. Reasignar, pasar a evaluación del comité o declarar desierto
+    IF v_candidatos = 1 THEN
         UPDATE sub_resultados
         SET id_colaborador_ganador = v_nuevo_id,
             monto_final            = v_nuevo_monto,
@@ -843,6 +855,22 @@ BEGIN
             motivo_desistimiento   = v_motivo,
             fecha_actualizacion    = NOW()
         WHERE id_resultado = v_resultado.id_resultado;
+    ELSIF v_candidatos > 1 THEN
+        UPDATE sub_resultados
+        SET id_colaborador_ganador = NULL,
+            monto_final            = v_nuevo_monto,
+            estado_adjudicacion    = 'En evaluación',
+            criterio_desempate     = 'REQUIERE EVALUACION',
+            motivo_desistimiento   = v_motivo,
+            fecha_actualizacion    = NOW()
+        WHERE id_resultado = v_resultado.id_resultado;
+
+        UPDATE sub_activos
+        SET estado = 'Cerrado'
+        WHERE id_activo = p_id_activo;
+
+        -- No se publica con activos en evaluación
+        UPDATE sub_app_config SET resultados_publicados = false WHERE id = 1;
     ELSE
         UPDATE sub_resultados
         SET id_colaborador_ganador = NULL,
@@ -868,14 +896,16 @@ BEGIN
         'id_colaborador_ganador',
         format('Colaborador %s (USD %s) desistió. Motivo: %s',
                v_resultado.id_colaborador_ganador, v_resultado.monto_final, v_motivo),
-        CASE WHEN v_hay_candidato
+        CASE WHEN v_candidatos = 1
              THEN format('Reasignado a colaborador %s (USD %s)', v_nuevo_id, v_nuevo_monto)
+             WHEN v_candidatos > 1
+             THEN format('En evaluación: empate total entre %s postores', v_candidatos)
              ELSE 'Desierto: sin postores elegibles'
         END,
         v_ci_admin
     );
 
-    IF v_hay_candidato THEN
+    IF v_candidatos = 1 THEN
         RETURN json_build_object(
             'success', true,
             'estado_adjudicacion', 'Reasignado',
@@ -883,6 +913,16 @@ BEGIN
             'colaborador_ganador', v_nuevo_nombre,
             'monto_final', v_nuevo_monto,
             'message', format('Activo reasignado a %s (%sº postor).', v_nuevo_nombre, v_orden_postor)
+        );
+    END IF;
+
+    IF v_candidatos > 1 THEN
+        RETURN json_build_object(
+            'success', true,
+            'estado_adjudicacion', 'En evaluación',
+            'id_colaborador_ganador', NULL,
+            'monto_final', v_nuevo_monto,
+            'message', 'Los siguientes postores empatan en monto, jerarquía y antigüedad: el activo queda en evaluación del comité y la publicación se pausa.'
         );
     END IF;
 
@@ -895,6 +935,124 @@ BEGIN
     );
 END;
 $$;
+
+-- Primer grupo de postores que hoy pueden ganar el activo: habilitados, rol Usuario,
+-- sin desistimiento en este activo y sin otro activo ganado en la categoría (tope).
+-- Una fila si hay un primero claro; varias si empatan en monto, jerarquía y antigüedad
+-- (las ordena por fecha de oferta); ninguna si no queda nadie. Uso interno.
+CREATE OR REPLACE FUNCTION candidatos_activo(p_id_activo INTEGER)
+RETURNS TABLE (id_colaborador INTEGER, nombre TEXT, cargo TEXT, monto NUMERIC)
+LANGUAGE sql STABLE
+SET search_path = public, extensions, pg_temp
+AS $$
+    WITH elegibles AS (
+        SELECT o.id_colaborador AS id_col, c.nombre::text AS nom, ca.descripcion::text AS car,
+               o.monto AS mon, ca.nivel_jerarquia AS niv, c.fecha_ingreso AS ing,
+               o.fecha_hora AS fh, o.id_oferta AS ido
+        FROM sub_ofertas o
+        JOIN sub_activos a ON a.id_activo = o.id_activo
+        JOIN sub_colaboradores c ON c.id_colaborador = o.id_colaborador
+        JOIN sub_cargos ca ON ca.id_cargo = c.id_cargo
+        WHERE o.id_activo = p_id_activo
+          AND c.habilitado = 'SI'
+          AND c.id_rol = 2
+          AND NOT EXISTS (
+              SELECT 1 FROM sub_desistimientos d
+              WHERE d.id_activo = p_id_activo AND d.id_colaborador = o.id_colaborador
+          )
+          AND NOT EXISTS (
+              SELECT 1
+              FROM sub_resultados r2
+              JOIN sub_activos a2 ON a2.id_activo = r2.id_activo
+              WHERE a2.id_categoria = a.id_categoria
+                AND r2.id_activo <> p_id_activo
+                AND r2.id_colaborador_ganador = o.id_colaborador
+          )
+    ),
+    primero AS (
+        SELECT mon, niv, ing FROM elegibles
+        ORDER BY mon DESC, niv ASC, ing ASC
+        LIMIT 1
+    )
+    SELECT e.id_col, e.nom, e.car, e.mon
+    FROM elegibles e
+    JOIN primero p ON e.mon = p.mon AND e.niv = p.niv AND e.ing = p.ing
+    ORDER BY e.fh, e.ido;
+$$;
+
+-- RESOLVER UN EMPATE TOTAL (F14): el admin registra a quién adjudicó el comité
+CREATE OR REPLACE FUNCTION resolver_evaluacion(
+    p_token TEXT,
+    p_id_activo INTEGER,
+    p_id_colaborador INTEGER
+) RETURNS JSON
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, extensions, pg_temp
+AS $$
+DECLARE
+    v_ci_admin   VARCHAR(20) := validar_sesion_admin(p_token);
+    v_resultado  sub_resultados%ROWTYPE;
+    v_monto      NUMERIC(10, 2);
+    v_nombre     TEXT;
+BEGIN
+    IF v_ci_admin IS NULL THEN
+        RETURN respuesta_sesion_invalida();
+    END IF;
+
+    -- Mismo lock que los desistimientos: los dos asignan ganadores fuera de procesar_ganadores()
+    PERFORM pg_advisory_xact_lock(hashtext('reasignar_por_desistimiento'));
+
+    SELECT * INTO v_resultado
+    FROM sub_resultados
+    WHERE id_activo = p_id_activo
+    FOR UPDATE;
+
+    IF NOT FOUND OR v_resultado.estado_adjudicacion <> 'En evaluación' THEN
+        RETURN json_build_object('success', false, 'error', 'Este activo no está en evaluación del comité.');
+    END IF;
+
+    -- Solo uno de los empatados que hoy puede ganarlo (tope y desistimientos al día)
+    SELECT monto, nombre INTO v_monto, v_nombre
+    FROM candidatos_activo(p_id_activo)
+    WHERE id_colaborador = p_id_colaborador;
+
+    IF NOT FOUND THEN
+        RETURN json_build_object('success', false,
+            'error', 'El colaborador no está entre los postores empatados de este activo.');
+    END IF;
+
+    UPDATE sub_resultados
+    SET id_colaborador_ganador = p_id_colaborador,
+        monto_final            = v_monto,
+        estado_adjudicacion    = 'Adjudicado',
+        criterio_desempate     = 'ADJUDICADO POR DECISION DEL COMITE',
+        fecha_actualizacion    = NOW()
+    WHERE id_resultado = v_resultado.id_resultado;
+
+    UPDATE sub_activos
+    SET estado = 'Adjudicado'
+    WHERE id_activo = p_id_activo;
+
+    INSERT INTO sub_auditoria_cambios (
+        tabla_afectada, id_registro, accion, campo, valor_anterior, valor_nuevo, usuario
+    ) VALUES (
+        'sub_resultados',
+        v_resultado.id_resultado,
+        'UPDATE',
+        'id_colaborador_ganador',
+        'En evaluación (empate total)',
+        format('Adjudicado por decisión del comité a colaborador %s (USD %s)', p_id_colaborador, v_monto),
+        v_ci_admin
+    );
+
+    RETURN json_build_object('success', true,
+        'message', format('Activo adjudicado a %s por decisión del comité.', v_nombre));
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION candidatos_activo(INTEGER) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION resolver_evaluacion(TEXT, INTEGER, INTEGER) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION resolver_evaluacion(TEXT, INTEGER, INTEGER) TO anon, authenticated;
 
 -- ═══════════════════════════════════════════════════════════
 -- 9b. FUNCIONES F09 — toda escritura pasa por RPC con token de sesión
@@ -1432,7 +1590,7 @@ $$;
 -- F10: lecturas que exigen sesión (la anon key solo lee el catálogo)
 --   'mis_ofertas', 'mis_vetos'           → cualquier sesión, solo los propios
 --   'resultados'                         → admin siempre; el resto si están publicados
---   'ofertas', 'colaboradores', 'nomina', 'desistimientos' → solo admin
+--   'ofertas', 'colaboradores', 'nomina', 'desistimientos', 'evaluaciones' → solo admin
 CREATE OR REPLACE FUNCTION leer_datos(p_token TEXT, p_consulta TEXT) RETURNS JSON
 LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = public, extensions, pg_temp
@@ -1489,6 +1647,15 @@ BEGIN
         SELECT json_agg(d ORDER BY d.id_activo, d.fecha) INTO v_filas
         FROM (SELECT id_activo, id_colaborador, motivo, fecha
               FROM sub_desistimientos) d;
+
+    ELSIF p_consulta = 'evaluaciones' THEN
+        -- Postores empatados de cada activo en evaluación del comité (F14)
+        SELECT json_agg(e ORDER BY e.id_activo, e.orden) INTO v_filas
+        FROM (SELECT r.id_activo, c.id_colaborador, c.nombre, c.cargo, c.monto, c.orden
+              FROM sub_resultados r
+              CROSS JOIN LATERAL candidatos_activo(r.id_activo)
+                  WITH ORDINALITY AS c(id_colaborador, nombre, cargo, monto, orden)
+              WHERE r.estado_adjudicacion = 'En evaluación') e;
 
     ELSE
         RETURN json_build_object('success', false, 'error', 'Consulta desconocida.');
@@ -1584,7 +1751,7 @@ END $$;
 
 -- ═══════════════════════════════════════════════════════════
 -- 13. REGISTRO DE MIGRACIONES — esta instalación ya incluye
---     todo hasta 23; los scripts nuevos se registran al aplicarse
+--     todo hasta 24; los scripts nuevos se registran al aplicarse
 -- ═══════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS sub_migraciones (
@@ -1605,7 +1772,8 @@ INSERT INTO sub_migraciones (archivo) VALUES
 ('20_restablecer_y_bloquear_cuenta.sql'),
 ('21_login_cuenta_bloqueada.sql'),
 ('22_post_subasta.sql'),
-('23_veto_servidor.sql')
+('23_veto_servidor.sql'),
+('24_evaluacion_comite.sql')
 ON CONFLICT (archivo) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════

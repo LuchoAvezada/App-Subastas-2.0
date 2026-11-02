@@ -115,7 +115,7 @@ describe('Algoritmo de Adjudicación F06 (Tope por Categoría y Desempate)', () 
     expect(resultados[0].criterio_desempate).toBe('GANADO POR ANTIGUEDAD');
   });
 
-  it('debe desempatar por fecha de oferta ante igualdad absoluta de monto, jerarquía y antigüedad', () => {
+  it('ante igualdad absoluta de monto, jerarquía y antigüedad deja el activo en evaluación del comité (F14)', () => {
     const activos: ActivoInput[] = [
       { id_activo: 4, id_categoria: 1, marca: 'Samsung', modelo: 'Tab', estado: 'Disponible' },
     ];
@@ -132,8 +132,10 @@ describe('Algoritmo de Adjudicación F06 (Tope por Categoría y Desempate)', () 
     const resultados = procesarAdjudicacion(ofertas, colabs, cargos, activos);
 
     expect(resultados).toHaveLength(1);
-    expect(resultados[0].id_colaborador_ganador).toBe(201); // Primera oferta recibida
-    expect(resultados[0].criterio_desempate).toBe('GANADO POR REGISTRO DE OFERTA');
+    // La fecha de la oferta ya no desempata: sin ganador hasta que decida el comité
+    expect(resultados[0].id_colaborador_ganador).toBeNull();
+    expect(resultados[0].monto_final).toBe(150);
+    expect(resultados[0].criterio_desempate).toBe('REQUIERE EVALUACION');
   });
 
   it('debe aplicar el tope de 1 por categoría: si lidera en 2 activos de la misma categoría, gana el de mayor monto y el otro pasa al 2º postor', () => {

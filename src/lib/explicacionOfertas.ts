@@ -5,7 +5,13 @@
  * tope de un activo por categoría. Se calcula con la nómina actual (spec 013, RF-02).
  */
 
-import { clasificarCriterio, compararPostores, type ColaboradorInput, type PostorEnriquecido } from './adjudicacion';
+import {
+  clasificarCriterio,
+  compararPostores,
+  empateTotal,
+  type ColaboradorInput,
+  type PostorEnriquecido,
+} from './adjudicacion';
 import { formatUSD } from './utils';
 import type { OfertaRecibida, ResultadoDetalle } from '../types/domain';
 
@@ -29,10 +35,16 @@ const TEXTO_CRITERIO: Record<string, string> = {
   'GANADO POR OFERTA MAS ALTA': 'Ofertó el monto más alto.',
   'GANADO POR JERARQUIA': 'Empató en monto y ganó por tener el cargo de mayor jerarquía.',
   'GANADO POR ANTIGUEDAD': 'Empató en monto y jerarquía, y ganó por mayor antigüedad en la empresa.',
+  // Resultados anteriores a F14: desde entonces el empate total lo decide el comité
   'GANADO POR REGISTRO DE OFERTA': 'Empató en monto, jerarquía y antigüedad, y ganó por registrar su oferta primero.',
   'GANADO POR TOPE DE CATEGORIA':
     'Quienes ofertaron más ya habían ganado otro activo de esta categoría (máximo uno por colaborador).',
+  'REQUIERE EVALUACION': 'Empate total en monto, jerarquía y antigüedad: la adjudicación la decide el comité.',
+  'ADJUDICADO POR DECISION DEL COMITE': 'Empató en monto, jerarquía y antigüedad; el comité decidió la adjudicación.',
 };
+
+const POR_COMITE = 'ADJUDICADO POR DECISION DEL COMITE';
+const POR_REGISTRO = 'GANADO POR REGISTRO DE OFERTA';
 
 /** Criterio guardado en sub_resultados, en lenguaje claro. */
 export function textoCriterio(criterio: string): string {
@@ -69,7 +81,12 @@ export function explicarOfertas(
   const colabs = new Map(nomina.map((c) => [c.id_colaborador, c]));
   const resultadoPorActivo = new Map(resultados.map((r) => [r.id_activo, r]));
   const desistio = new Map(desistimientos.map((d) => [`${d.id_activo}-${d.id_colaborador}`, d.motivo]));
-  const vigentes = resultados.filter((r) => r.id_colaborador_ganador && r.estado_adjudicacion !== 'Desierto');
+  const vigentes = resultados.filter((r) => r.id_colaborador_ganador);
+  // Otro activo de la misma categoría ya ganado por el colaborador (tope)
+  const otroGanado = (o: OfertaRecibida) =>
+    vigentes.find(
+      (g) => g.categoria === o.categoria && g.id_activo !== o.id_activo && g.id_colaborador_ganador === o.id_colaborador
+    );
 
   const porActivo = new Map<number, { oferta: OfertaRecibida; postor: PostorEnriquecido }[]>();
   for (const o of ofertas) {
@@ -105,6 +122,9 @@ export function explicarOfertas(
         if (r?.estado_adjudicacion === 'Reasignado') {
           return { resultado: 'Ganó', comentario: 'Reasignado: el ganador anterior desistió y era el siguiente postor elegible.' };
         }
+        if (r?.criterio_desempate === POR_COMITE || r?.criterio_desempate === POR_REGISTRO) {
+          return { resultado: 'Ganó', comentario: textoCriterio(r.criterio_desempate) };
+        }
         const rival = lista.find((x) => x.postor !== p && esElegible(colabs.get(x.postor.id_colaborador)))?.postor;
         return {
           resultado: 'Ganó',
@@ -121,16 +141,34 @@ export function explicarOfertas(
       }
       if (!esElegible(c)) return perdio('No participó de la adjudicación: el colaborador está bloqueado.');
 
-      if (ganadora && compararPostores(p, ganadora) > 0) return perdio(motivoPerdedor(p, ganadora));
+      const otro = otroGanado(o);
+      const empate = ganadora && empateTotal(p, ganadora);
+      if (empate && r?.criterio_desempate === POR_COMITE) {
+        return perdio('Empató en monto, jerarquía y antigüedad, y el comité adjudicó el activo a otro postor.');
+      }
+      // Desde F14 un empate total solo se pierde por el tope (lo explica el mensaje de tope);
+      // antes se perdía por el orden de registro
+      const porTope = empate && otro && r?.criterio_desempate !== POR_REGISTRO;
+      if (ganadora && compararPostores(p, ganadora) > 0 && !porTope) return perdio(motivoPerdedor(p, ganadora));
 
-      const otro = vigentes.find(
-        (g) => g.categoria === o.categoria && g.id_activo !== idActivo && g.id_colaborador_ganador === o.id_colaborador
-      );
       if (otro) {
         const nombre = `${otro.marca || ''} ${otro.modelo || ''}`.trim();
         return perdio(
           `Tope de categoría: ya ganó el activo #${otro.id_activo}${nombre ? ` (${nombre})` : ''} de ${o.categoria}; máximo uno por colaborador.`
         );
+      }
+
+      if (r?.estado_adjudicacion === 'En evaluación') {
+        // Primer postor que hoy puede ganarlo: los que empatan con él los evalúa el comité (F14)
+        const primero = lista.find(
+          (x) =>
+            esElegible(colabs.get(x.oferta.id_colaborador)) &&
+            !desistio.has(`${idActivo}-${x.oferta.id_colaborador}`) &&
+            !otroGanado(x.oferta)
+        )!.postor;
+        return empateTotal(p, primero)
+          ? { resultado: 'Pendiente', comentario: textoCriterio('REQUIERE EVALUACION') }
+          : perdio('Quedó detrás de los postores empatados que evalúa el comité.');
       }
 
       if (r?.estado_adjudicacion === 'Desierto') return perdio('El activo quedó desierto tras los desistimientos.');
