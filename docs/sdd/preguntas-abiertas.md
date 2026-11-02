@@ -23,7 +23,7 @@ Este documento registra las decisiones de negocio y alcance aprobadas por el res
 | **Q-08** | ¿Cómo se publica la app en internet? | F10 (Publicación) | Tailscale Funnel, con acceso libre y lecturas protegidas por la sesión | `✅ Resuelta` |
 | **Q-09** | ¿Qué pasa con los activos que quedan sin ofertas al cierre? | F11 (Adjudicación) | Segunda ronda solo con los Disponibles, sin borrar la primera y con el tope por categoría de toda la subasta | `✅ Resuelta` |
 | **Q-10** | ¿Cómo se recupera una contraseña y cómo se bloquea un acceso? | F12 (Colaboradores) | Solo un administrador: restablecer borra la cuenta para registrarse de nuevo; bloquear es inhabilitar | `✅ Resuelta` |
-| **Q-11** | ¿Hace falta un segundo factor para registrar la cuenta? | F02 / F10 / F12 (Acceso) | — (hoy basta conocer la cédula) | `pendiente` |
+| **Q-11** | ¿Hace falta un segundo factor para registrar la cuenta? | F02 / F10 / F12 (Acceso) | No: el registro sigue solo con la cédula, por pedido del Directorio Ejecutivo (riesgo aceptado) | `✅ Resuelta` |
 
 ---
 
@@ -153,6 +153,7 @@ Este documento registra las decisiones de negocio y alcance aprobadas por el res
 
 ### Q-11: Segundo factor en el registro de cuenta
 - **Contexto:** `registrar_nuevo_usuario` deja crear la contraseña a quien conozca la cédula de un colaborador habilitado que todavía no se registró, o que un admin acaba de restablecer. Con la app en internet (Q-08), el riesgo es mayor. Quedó fuera del alcance de F09, F10 y F12.
-- **Opciones:** a definir (por ejemplo, un código de activación entregado por RRHH o por el administrador).
-- **Para qué feature:** F02 (Autenticación) / nueva feature.
-- **Estado:** `pendiente`
+- **Decisión adoptada:** **No se agrega segundo factor.** El registro y el login siguen solo con la cédula, por pedido directo del Directorio Ejecutivo. El riesgo fue informado y aceptado.
+- **Impacto técnico:** ninguno; `registrar_nuevo_usuario` no cambia.
+- **Para qué feature:** F02 (Autenticación).
+- **Estado:** `✅ Resuelta` (2026-11-01)

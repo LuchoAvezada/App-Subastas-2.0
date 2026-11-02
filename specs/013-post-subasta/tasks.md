@@ -2,7 +2,7 @@
 
 **Feature**: F13  
 **Fecha**: 2026-10-29  
-**Estado**: Implementada, pendiente de despliegue  
+**Estado**: Desplegada (2026-11-01), falta la prueba manual  
 
 ---
 

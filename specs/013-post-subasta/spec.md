@@ -2,7 +2,7 @@
 
 **Feature ID**: F13  
 **Fecha**: 2026-10-29  
-**Estado**: Implementada, pendiente de despliegue (`sql/22`)  
+**Estado**: Desplegada (`sql/22` aplicada en el NUC el 2026-11-01, build `8a4432a`), falta la prueba manual  
 
 ---
 

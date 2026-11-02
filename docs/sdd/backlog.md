@@ -187,7 +187,7 @@ El siguiente backlog desglosa las features del proyecto ordenadas por dependenci
 
 ---
 
-### F13: Post-subasta: Reportes para el Comité y Vista de Resultados (🛠️ Implementada, pendiente de despliegue)
+### F13: Post-subasta: Reportes para el Comité y Vista de Resultados (🚀 Desplegada, falta prueba manual)
 - **Objetivo:** Entregar al comité un PDF solo con lo que valida (activo y ganador con su cargo y motivo), un Excel con todas las ofertas y el motivo automático de cada resultado, ocultar del catálogo lo ya adjudicado y limitar los totales de Resultados a la administración.
 - **Especificación:** `specs/013-post-subasta/`.
 - **Criterios de Aceptación:**
